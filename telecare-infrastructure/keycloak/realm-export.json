@@ -302,20 +302,9 @@
           "attributes": {}
         }
       ],
-      "telecare-id": [],
-      "telecare-admin-id": [
-        {
-          "id": "b89f44aa-7baf-4f23-8471-b932516fbad8",
-          "name": "ADMIN_PORTAL_ACCESS",
-          "description": "Allows access to the Telecare administration portal",
-          "composite": false,
-          "clientRole": true,
-          "containerId": "ebaa2d7c-f219-4fa7-abdc-b824691d13a9",
-          "attributes": {}
-        }
-      ],
       "security-admin-console": [],
       "admin-cli": [],
+      "telecare-id": [],
       "account-console": [],
       "broker": [
         {
@@ -325,6 +314,17 @@
           "composite": false,
           "clientRole": true,
           "containerId": "578bd52b-9ec6-4494-b64d-c8dfb253286f",
+          "attributes": {}
+        }
+      ],
+      "telecare-admin-id": [
+        {
+          "id": "b89f44aa-7baf-4f23-8471-b932516fbad8",
+          "name": "ADMIN_PORTAL_ACCESS",
+          "description": "Allows access to the Telecare administration portal",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "ebaa2d7c-f219-4fa7-abdc-b824691d13a9",
           "attributes": {}
         }
       ],
@@ -693,129 +693,6 @@
       ]
     },
     {
-      "id": "ebaa2d7c-f219-4fa7-abdc-b824691d13a9",
-      "clientId": "telecare-admin-id",
-      "name": "Telecare Admin ID",
-      "description": "Telecare Admin Description",
-      "rootUrl": "http://localhost:55000",
-      "adminUrl": "http://localhost:55000",
-      "baseUrl": "http://localhost:55000",
-      "surrogateAuthRequired": false,
-      "enabled": true,
-      "alwaysDisplayInConsole": false,
-      "clientAuthenticatorType": "client-secret",
-      "redirectUris": [
-        "http://localhost:55000/*"
-      ],
-      "webOrigins": [
-        "http://localhost:55000"
-      ],
-      "notBefore": 0,
-      "bearerOnly": false,
-      "consentRequired": false,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": false,
-      "publicClient": true,
-      "frontchannelLogout": true,
-      "protocol": "openid-connect",
-      "attributes": {
-        "login_theme": "telecare-admin",
-        "realm_client": "false",
-        "oidc.ciba.grant.enabled": "false",
-        "backchannel.logout.session.required": "true",
-        "standard.token.exchange.enabled": "false",
-        "post.logout.redirect.uris": "http://localhost:55000/*",
-        "oauth2.device.authorization.grant.enabled": "false",
-        "backchannel.logout.revoke.offline.tokens": "false",
-        "dpop.bound.access.tokens": "false"
-      },
-      "authenticationFlowBindingOverrides": {},
-      "fullScopeAllowed": true,
-      "nodeReRegistrationTimeout": -1,
-      "defaultClientScopes": [
-        "web-origins",
-        "acr",
-        "roles",
-        "profile",
-        "basic",
-        "email"
-      ],
-      "optionalClientScopes": [
-        "address",
-        "phone",
-        "organization",
-        "offline_access",
-        "microprofile-jwt"
-      ]
-    },
-    {
-      "id": "650b3048-3c88-453c-b7ce-15817a11b90f",
-      "clientId": "telecare-id",
-      "name": "Telecare ID",
-      "description": "Telecare Description",
-      "rootUrl": "http://localhost:53000",
-      "adminUrl": "http://localhost:53000",
-      "baseUrl": "http://localhost:53000",
-      "surrogateAuthRequired": false,
-      "enabled": true,
-      "alwaysDisplayInConsole": false,
-      "clientAuthenticatorType": "client-secret",
-      "redirectUris": [
-        "telecare://*",
-        "http://localhost:53000/*"
-      ],
-      "webOrigins": [
-        "http://localhost:53000"
-      ],
-      "notBefore": 0,
-      "bearerOnly": false,
-      "consentRequired": false,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": false,
-      "publicClient": true,
-      "frontchannelLogout": true,
-      "protocol": "openid-connect",
-      "attributes": {
-        "logout.confirmation.enabled": "false",
-        "client.secret.creation.time": "1782990356",
-        "oauth2.jwt.authorization.grant.enabled": "false",
-        "standard.token.exchange.enabled": "false",
-        "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "http://localhost:53000/*##telecare://*",
-        "oauth2.device.authorization.grant.enabled": "false",
-        "use.jwks.url": "false",
-        "backchannel.logout.revoke.offline.tokens": "false",
-        "realm_client": "false",
-        "oidc.ciba.grant.enabled": "false",
-        "backchannel.logout.session.required": "true",
-        "display.on.consent.screen": "false",
-        "pkce.code.challenge.method": "S256",
-        "dpop.bound.access.tokens": "false"
-      },
-      "authenticationFlowBindingOverrides": {},
-      "fullScopeAllowed": true,
-      "nodeReRegistrationTimeout": -1,
-      "defaultClientScopes": [
-        "web-origins",
-        "acr",
-        "roles",
-        "profile",
-        "basic",
-        "email"
-      ],
-      "optionalClientScopes": [
-        "address",
-        "phone",
-        "organization",
-        "offline_access",
-        "microprofile-jwt"
-      ]
-    },
-    {
       "id": "e5113e21-8d6e-4113-9549-d4fc14ab51a2",
       "clientId": "realm-management",
       "name": "${client_realm-management}",
@@ -911,6 +788,129 @@
           }
         }
       ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "organization",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "ebaa2d7c-f219-4fa7-abdc-b824691d13a9",
+      "clientId": "telecare-admin-id",
+      "name": "Telecare Admin ID",
+      "description": "Telecare Admin Description",
+      "rootUrl": "http://localhost:55000",
+      "adminUrl": "http://localhost:55000",
+      "baseUrl": "http://localhost:55000",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "http://localhost:55000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:55000"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "backchannel.logout.session.required": "true",
+        "standard.token.exchange.enabled": "false",
+        "login_theme": "telecare-admin",
+        "post.logout.redirect.uris": "http://localhost:55000/*",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "dpop.bound.access.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "organization",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "650b3048-3c88-453c-b7ce-15817a11b90f",
+      "clientId": "telecare-id",
+      "name": "Telecare ID",
+      "description": "Telecare Description",
+      "rootUrl": "http://localhost:53000",
+      "adminUrl": "http://localhost:53000",
+      "baseUrl": "http://localhost:53000",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "telecare://*",
+        "http://localhost:53000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:53000"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "logout.confirmation.enabled": "false",
+        "client.secret.creation.time": "1782990356",
+        "oauth2.jwt.authorization.grant.enabled": "false",
+        "standard.token.exchange.enabled": "false",
+        "frontchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "http://localhost:53000/*##telecare://*",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "use.jwks.url": "false",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "backchannel.logout.session.required": "true",
+        "display.on.consent.screen": "false",
+        "pkce.code.challenge.method": "S256",
+        "dpop.bound.access.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
       "defaultClientScopes": [
         "web-origins",
         "acr",
@@ -1648,18 +1648,18 @@
     "starttls": "true",
     "auth": "true",
     "writeTimeout": "10000",
-    "envelopeFrom": "telecare.platform.cskh@gmail.com",
+    "envelopeFrom": "homespace.platform.cskh@gmail.com",
     "ssl": "false",
     "timeout": "10000",
     "password": "**********",
     "port": "587",
     "host": "smtp.gmail.com",
-    "replyTo": "telecare.platform.cskh@gmail.com",
-    "from": "telecare.platform.cskh@gmail.com",
+    "replyTo": "homespace.platform.cskh@gmail.com",
+    "from": "homespace.platform.cskh@gmail.com",
     "fromDisplayName": "Telecare Platform",
     "authType": "basic",
     "connectionTimeout": "10000",
-    "user": "telecare.platform.cskh@gmail.com"
+    "user": "homespace.platform.cskh@gmail.com"
   },
   "loginTheme": "telecare",
   "eventsEnabled": false,
@@ -1777,7 +1777,7 @@
       "hideOnLogin": false,
       "config": {
         "acceptsPromptNoneForwardFromClient": "false",
-        "clientId": "136108297335-ip7frit2aui3lis1tuu03jts4uatdgmb.apps.googleusercontent.com",
+        "clientId": "116934724087-bsic3e6jrdui9ebt2kap2sivfn37af0a.apps.googleusercontent.com",
         "disableUserInfo": "false",
         "showInAccountConsole": "ALWAYS",
         "filteredByClaim": "false",
@@ -1819,14 +1819,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
+            "oidc-address-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "saml-role-list-mapper",
+            "saml-user-property-mapper",
+            "saml-user-attribute-mapper",
             "oidc-usermodel-property-mapper",
             "oidc-full-name-mapper",
-            "saml-role-list-mapper",
-            "saml-user-attribute-mapper",
-            "saml-user-property-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "oidc-address-mapper",
-            "oidc-usermodel-attribute-mapper"
+            "oidc-sha256-pairwise-sub-mapper"
           ]
         }
       },
@@ -1854,14 +1854,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "saml-role-list-mapper",
-            "saml-user-attribute-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "oidc-full-name-mapper",
-            "saml-user-property-mapper",
             "oidc-address-mapper",
             "oidc-usermodel-property-mapper",
-            "oidc-usermodel-attribute-mapper"
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "saml-user-attribute-mapper",
+            "saml-role-list-mapper",
+            "saml-user-property-mapper",
+            "oidc-full-name-mapper"
           ]
         }
       },
@@ -2230,6 +2230,49 @@
       ]
     },
     {
+      "id": "95422fa1-a279-4211-b85e-25cce7326717",
+      "alias": "Organization",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": true,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 10,
+          "autheticatorFlow": true,
+          "flowAlias": "Browser - Conditional Organization",
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "519ba8bc-78e4-4e0b-a89b-1c2766da049f",
+      "alias": "Reset - Conditional OTP",
+      "description": "Flow to determine if the OTP should be reset or not. Set to REQUIRED to force.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": true,
+      "authenticationExecutions": [
+        {
+          "authenticator": "conditional-user-configured",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "autheticatorFlow": false,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "reset-otp",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "autheticatorFlow": false,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
       "id": "ca7f2e6f-58b7-4c40-b3dc-0366e9a5bf56",
       "alias": "Telecare Browser Phone Login",
       "description": "Browser login with phone, email or username",
@@ -2395,49 +2438,6 @@
           "priority": 21,
           "autheticatorFlow": true,
           "flowAlias": "Telecare Browser Phone Login Browser - Conditional 2FA",
-          "userSetupAllowed": false
-        }
-      ]
-    },
-    {
-      "id": "95422fa1-a279-4211-b85e-25cce7326717",
-      "alias": "Organization",
-      "providerId": "basic-flow",
-      "topLevel": false,
-      "builtIn": true,
-      "authenticationExecutions": [
-        {
-          "authenticatorFlow": true,
-          "requirement": "CONDITIONAL",
-          "priority": 10,
-          "autheticatorFlow": true,
-          "flowAlias": "Browser - Conditional Organization",
-          "userSetupAllowed": false
-        }
-      ]
-    },
-    {
-      "id": "519ba8bc-78e4-4e0b-a89b-1c2766da049f",
-      "alias": "Reset - Conditional OTP",
-      "description": "Flow to determine if the OTP should be reset or not. Set to REQUIRED to force.",
-      "providerId": "basic-flow",
-      "topLevel": false,
-      "builtIn": true,
-      "authenticationExecutions": [
-        {
-          "authenticator": "conditional-user-configured",
-          "authenticatorFlow": false,
-          "requirement": "REQUIRED",
-          "priority": 10,
-          "autheticatorFlow": false,
-          "userSetupAllowed": false
-        },
-        {
-          "authenticator": "reset-otp",
-          "authenticatorFlow": false,
-          "requirement": "REQUIRED",
-          "priority": 20,
-          "autheticatorFlow": false,
           "userSetupAllowed": false
         }
       ]
