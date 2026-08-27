@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-TeleCareBackendApplication<telecare-backend>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.hs.user.TeleCareBackendApplication",
+            "projectName": "telecare-backend",
+            "args": "",
+            "envFile": "${workspaceFolder}/telecare-backend/.env.dev",
+            "console": "integratedTerminal"
+        }
+    ]
+}

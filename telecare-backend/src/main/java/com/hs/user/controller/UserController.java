@@ -1,0 +1,107 @@
+package com.hs.user.controller;
+
+import java.util.Map;
+
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.hs.user.dto.base.ApiResponse;
+import com.hs.user.dto.request.OnboardingRequest;
+import com.hs.user.dto.request.SetInitialPasswordRequest;
+import com.hs.user.dto.request.UpdateAvatarRequest;
+import com.hs.user.dto.request.UpdatePasswordRequest;
+import com.hs.user.dto.request.UpdateProfileRequest;
+import com.hs.user.dto.response.UserProfileResponse;
+import com.hs.user.service.UserService;
+
+import jakarta.validation.Valid;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
+@RestController
+@RequestMapping("/users")
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class UserController {
+
+    UserService userService;
+
+    @PutMapping("/me/onboarding")
+    public ApiResponse<Void> onboarding(@RequestBody @Valid OnboardingRequest request) {
+        userService.processOnboarding(request);
+        return ApiResponse.<Void>builder()
+                .message("Onboarding completed")
+                .build();
+    }
+
+    @PostMapping("/me/password")
+    public ApiResponse<Void> updateUserPassword(@RequestBody @Valid UpdatePasswordRequest request) {
+        userService.updateUserPassword(request);
+        return ApiResponse.<Void>builder()
+                .message("Password updated successfully")
+                .build();
+    }
+
+    @PostMapping("/me/password/initial")
+    public ApiResponse<Void> setInitialPassword(@RequestBody @Valid SetInitialPasswordRequest request) {
+        userService.setInitialPassword(request);
+        return ApiResponse.<Void>builder()
+                .message("Initial password set successfully")
+                .build();
+    }
+
+    @GetMapping("/me/password/status")
+    public ApiResponse<Boolean> getPasswordStatus() {
+        return ApiResponse.<Boolean>builder()
+                .result(userService.hasPassword())
+                .build();
+    }
+
+    @GetMapping("/me/profile")
+    public ApiResponse<UserProfileResponse> getUserProfile() {
+        return ApiResponse.<UserProfileResponse>builder()
+                .result(userService.getUserProfile())
+                .build();
+    }
+
+    @PostMapping("/me/profile")
+    public ApiResponse<Void> updateUserProfile(@RequestBody @Valid UpdateProfileRequest request) {
+        userService.updateUserProfile(request);
+        return ApiResponse.<Void>builder()
+                .message("Profile updated successfully")
+                .build();
+    }
+
+    @PutMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<Map<String, String>> uploadUserAvatar(@RequestParam("file") MultipartFile file) {
+        String avatarUrl = userService.updateUserAvatar(file);
+        return ApiResponse.<Map<String, String>>builder()
+                .message("Avatar updated successfully")
+                .result(Map.of("avatarUrl", avatarUrl))
+                .build();
+    }
+
+    @PutMapping(value = "/me/avatar", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<Void> updateUserAvatar(@RequestBody @Valid UpdateAvatarRequest request) {
+        userService.updateUserAvatar(request);
+        return ApiResponse.<Void>builder()
+                .message("Avatar updated successfully")
+                .build();
+    }
+
+    @PostMapping("/me/email/verify")
+    public ApiResponse<Void> verifyEmail() {
+        userService.verifyCurrentUserEmail();
+        return ApiResponse.<Void>builder()
+                .message("Email verified successfully")
+                .build();
+    }
+}

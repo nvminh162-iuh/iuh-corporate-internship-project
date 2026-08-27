@@ -1,0 +1,1169 @@
+{
+  "info": {
+    "_postman_id": "541ba16f-88c6-4f5a-a7dc-4465d2c2f4e7",
+    "name": "TeleCare Backend API",
+    "description": "Postman collection for testing TeleCare Monolith Backend APIs directly on port 58080 (OAuth2 Keycloak authentication on port 59000).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "40740215"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Get Token - Password Grant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.access_token) pm.collectionVariables.set('accessToken', json.access_token);",
+                  "if (json.id_token) pm.collectionVariables.set('idToken', json.id_token);",
+                  "pm.test('access token saved', () => pm.expect(pm.collectionVariables.get('accessToken')).to.not.be.empty);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{clientId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{scope}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloakUrl}}/realms/{{realm}}/protocol/openid-connect/token",
+              "host": [
+                "{{keycloakUrl}}"
+              ],
+              "path": [
+                "realms",
+                "{{realm}}",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            },
+            "description": "Signs in with the bootstrap admin seeded by telecare-backend on first run (BOOTSTRAP_ADMIN_USERNAME / BOOTSTRAP_ADMIN_PASSWORD, default telecare / Telecare@123), so no variable needs editing before running the collection."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Onboarding Me",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Admin\",\n  \"lastName\": \"Tester\",\n  \"phone\": \"{{phoneNumber}}\",\n  \"dob\": \"2000-01-01\",\n  \"gender\": \"MALE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me/onboarding",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "onboarding"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const previous = pm.collectionVariables.get('oldPassword');",
+                  "  const current = pm.collectionVariables.get('newPassword');",
+                  "  pm.collectionVariables.set('oldPassword', current);",
+                  "  pm.collectionVariables.set('newPassword', previous);",
+                  "  pm.collectionVariables.set('password', current);",
+                  "  pm.test('login password rotated', () => pm.expect(pm.collectionVariables.get('password')).to.eql(current));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"{{oldPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "password"
+              ]
+            },
+            "description": "On success the collection swaps oldPassword and newPassword and points the login password at the new value, so Get Token keeps working without editing variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Password Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('password status is boolean', () => pm.expect(body.result).to.be.a('boolean'));",
+                  "pm.collectionVariables.set('hasPassword', String(body.result));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/password/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "password",
+                "status"
+              ]
+            },
+            "description": "Returns result=true when the current Keycloak account has a password credential; otherwise returns false."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Initial Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"{{initialPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me/password/initial",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "password",
+                "initial"
+              ]
+            },
+            "description": "Set password for social/federated users who do not have a password yet. Fails with PASSWORD_ALREADY_SET if a password credential already exists."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.result?.id) pm.collectionVariables.set('userId', body.result.id);",
+                  "pm.test('userId saved when profile exists', () => pm.expect(pm.collectionVariables.get('userId')).to.not.be.empty);",
+                  "pm.test('full profile fields returned', () => {",
+                  "  pm.expect(body.result).to.include.keys('id', 'username', 'email', 'firstName', 'lastName', 'emailVerified', 'avatarUrl', 'phone', 'dob', 'gender', 'roleId', 'role', 'onBoarded', 'active', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'address');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"email\": \"{{userEmail}}\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"Tester\",\n  \"phone\": \"{{phoneNumber}}\",\n  \"dob\": \"2000-01-01\",\n  \"gender\": \"MALE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Address",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/address",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "address"
+              ]
+            },
+            "description": "Returns the current user's active address. 404 ADDRESS_NOT_EXISTED when none is saved or it was soft-deleted."
+          },
+          "response": []
+        },
+        {
+          "name": "Save My Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provinceCode\": \"79\",\n  \"provinceName\": \"Thành phố Hồ Chí Minh\",\n  \"wardCode\": \"26734\",\n  \"wardName\": \"Phường 5\",\n  \"streetLine\": \"460/6 Nơ Trang Long\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me/address",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "address"
+              ]
+            },
+            "description": "Creates or updates the current user's address. Frontend loads province/ward from hs-location-service, then sends codes + names + street line."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete My Address",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/address",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "address"
+              ]
+            },
+            "description": "Soft-deletes the current user's address (active=false). The row is kept. GET returns 404 until PUT, which reactivates the same row."
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Avatar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"avatarUrl\": \"{{avatarUrl}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "avatar"
+              ]
+            },
+            "description": "Updates avatarUrl in Keycloak attribute 'picture' and synchronizes it to the core database."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Addresses",
+      "item": [
+        {
+          "name": "Get Current User Address",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addresses/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "addresses",
+                "me"
+              ]
+            },
+            "description": "Lấy thông tin địa chỉ của người dùng hiện tại đang đăng nhập."
+          },
+          "response": []
+        },
+        {
+          "name": "Upsert Current User Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provinceCode\": \"79\",\n  \"provinceName\": \"Thành phố Hồ Chí Minh\",\n  \"wardCode\": \"26740\",\n  \"wardName\": \"Phường Bến Nghé\",\n  \"streetAddress\": \"123 Đường Lê Lợi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/addresses/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "addresses",
+                "me"
+              ]
+            },
+            "description": "Tạo mới hoặc cập nhật địa chỉ của người dùng hiện tại."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Current User Address",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addresses/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "addresses",
+                "me"
+              ]
+            },
+            "description": "Xóa địa chỉ của người dùng hiện tại."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Users",
+      "item": [
+        {
+          "name": "Create User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('user accepted for provisioning', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(body.result.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(body.result.provisioningStatus).to.eql('PROVISIONING');",
+                  "});",
+                  "if (body.result?.id) pm.collectionVariables.set('createdUserId', body.result.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminCreateUsername}}\",\n  \"email\": \"{{adminCreateEmail}}\",\n  \"firstName\": \"System\",\n  \"lastName\": \"User\",\n  \"phone\": \"{{adminCreatePhone}}\",\n  \"enabled\": true,\n  \"sendInvitation\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ]
+            },
+            "description": "Creates the account in Keycloak. Keycloak events then provision the database record through Kafka. When enabled, invitation email requests email verification and password setup."
+          },
+          "response": []
+        },
+        {
+          "name": "List Users - Page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const page = body.result;",
+                  "pm.test('paged users returned', () => {",
+                  "  pm.expect(page.result).to.be.an('array');",
+                  "  pm.expect(page.page).to.be.a('number');",
+                  "  pm.expect(page.totalElements).to.be.a('number');",
+                  "});",
+                  "if (page.result?.[0]?.id) pm.collectionVariables.set('userId', page.result[0].id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?page=0&size=10&sort=createdAt,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Spring request page index is zero-based."
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc"
+                }
+              ]
+            },
+            "description": "Returns a paginated list of users. Response PageResponse.page is one-based."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('full user profile returned', () => {",
+                  "  pm.expect(body.result.id).to.eql(pm.collectionVariables.get('userId'));",
+                  "  pm.expect(body.result).to.include.keys('id', 'username', 'email', 'firstName', 'lastName', 'avatarUrl', 'avatarStorageId', 'phone', 'dob', 'gender', 'roleId', 'role', 'onBoarded', 'active', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy');",
+                  "  ['createdBy', 'updatedBy'].forEach((field) => {",
+                  "    const actor = body.result[field];",
+                  "    if (actor) {",
+                  "      pm.expect(actor).to.include.keys('id', 'fullName', 'username', 'phone', 'email');",
+                  "    }",
+                  "  });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "Returns all persisted profile fields for a user. Requires ADMIN authority."
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('user updated', () => {",
+                  "  pm.expect(body.result.id).to.eql(pm.collectionVariables.get('userId'));",
+                  "  pm.expect(body.result.firstName).to.eql('Van Minh');",
+                  "  pm.expect(body.result.gender).to.eql('MALE');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminCreateUsername}}\",\n  \"email\": \"{{adminCreateEmail}}\",\n  \"firstName\": \"Van Minh\",\n  \"lastName\": \"Nguyen\",\n  \"phone\": \"{{adminCreatePhone}}\",\n  \"dob\": \"2000-08-06\",\n  \"gender\": \"MALE\",\n  \"roleId\": \"{{roleId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "Updates the profile of any user by ID. Requires ADMIN plus USER_UPDATE authority.\n\nAccepts username, email, firstName, lastName, phone, dob, gender and roleId. All fields are optional and omitted or blank fields keep their current value, so this doubles as a partial update.\n\nusername, email, firstName, lastName and phone are pushed to Keycloak and mirrored back through the Kafka sync. dob, gender and role exist only in the database.\n\nYou cannot change your own roleId (code 2018).\n\nHandled by dedicated endpoints instead: account status through Enable / Disable User, onboarding through Onboarding Me, and the avatar through the storage upload flow at PUT /users/me/avatar. id and the audit columns are managed by the system.\n\nChanging the email resets Keycloak email verification, so follow it with Resend Invitation."
+          },
+          "response": []
+        },
+        {
+          "name": "Disable User",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}/disable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}",
+                "disable"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enable User",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}/enable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}",
+                "enable"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resend Invitation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}/resend-invitation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}",
+                "resend-invitation"
+              ]
+            },
+            "description": "Sends a new Keycloak execute-actions email (verify email + set password). The previous 12-hour action link is replaced. The user must be enabled. Fails if the account already completed those actions."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Roles",
+      "item": [
+        {
+          "name": "List Roles - Page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const roles = body.result?.result || body.result || [];",
+                  "const target = roles.find(r => r.name === pm.collectionVariables.get('roleName')) || roles.find(r => r.name === 'ADMIN') || roles[0];",
+                  "if (target?.id) pm.collectionVariables.set('roleId', target.id);",
+                  "pm.test('roleId saved when roles exist', () => pm.expect(pm.collectionVariables.get('roleId')).to.not.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/roles?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "roles"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "includePermissions",
+                  "value": "true",
+                  "disabled": true,
+                  "description": "Set true to embed each role's permissions. Default is false / omitted."
+                }
+              ]
+            },
+            "description": "Paged role list. Permissions are omitted unless includePermissions=true."
+          },
+          "response": []
+        },
+        {
+          "name": "List Roles - All",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const roles = Array.isArray(body.result) ? body.result : [];",
+                  "const target = roles.find(r => r.name === pm.collectionVariables.get('roleName')) || roles.find(r => r.name === 'ADMIN') || roles[0];",
+                  "if (target?.id) pm.collectionVariables.set('roleId', target.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/roles/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "roles",
+                "all"
+              ]
+            },
+            "description": "Returns every role without permissions. Use GET /admin/roles?includePermissions=true when the permission list is needed."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "roles",
+                "{{roleId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Role By ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated from Postman\",\n  \"permissionIdList\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "roles",
+                "{{roleId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Permissions",
+      "item": [
+        {
+          "name": "List Permissions - Page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const permissions = body.result?.result || body.result || [];",
+                  "const target = permissions.find(p => p.name === pm.collectionVariables.get('permissionName')) || permissions[0];",
+                  "if (target?.id) pm.collectionVariables.set('permissionId', target.id);",
+                  "pm.test('permissionId saved when permissions exist', () => pm.expect(pm.collectionVariables.get('permissionId')).to.not.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/permissions?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "permissions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Permissions - All",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const permissions = Array.isArray(body.result) ? body.result : [];",
+                  "const target = permissions.find(p => p.name === pm.collectionVariables.get('permissionName')) || permissions[0];",
+                  "if (target?.id) pm.collectionVariables.set('permissionId', target.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/permissions/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "permissions",
+                "all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Permission By ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated from Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/permissions/{{permissionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "permissions",
+                "{{permissionId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "requests": {},
+        "exec": [
+          "if (!pm.collectionVariables.get('adminAuthorities')) {",
+          "  pm.collectionVariables.set('adminAuthorities', 'USER_VIEW,USER_CREATE,USER_UPDATE,ROLE_VIEW,ROLE_UPDATE,PERMISSION_VIEW,PERMISSION_UPDATE');",
+          "}",
+          "if (!pm.collectionVariables.get('roleName')) pm.collectionVariables.set('roleName', 'TEST_ROLE');",
+          "if (!pm.collectionVariables.get('permissionName')) pm.collectionVariables.set('permissionName', 'TEST_PERMISSION');",
+          "// Matches the BOOTSTRAP_ADMIN_* defaults seeded by telecare-backend on first run.",
+          "if (!pm.collectionVariables.get('username')) pm.collectionVariables.set('username', 'telecare');",
+          "if (!pm.collectionVariables.get('password')) pm.collectionVariables.set('password', 'Telecare@123');"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:58080"
+    },
+    {
+      "key": "keycloakUrl",
+      "value": "http://localhost:59000"
+    },
+    {
+      "key": "realm",
+      "value": "telecare-platform"
+    },
+    {
+      "key": "clientId",
+      "value": "telecare-id"
+    },
+    {
+      "key": "clientSecret",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": "telecare"
+    },
+    {
+      "key": "password",
+      "value": "Telecare@123"
+    },
+    {
+      "key": "oldPassword",
+      "value": "Telecare@123"
+    },
+    {
+      "key": "newPassword",
+      "value": "Telecare@1234"
+    },
+    {
+      "key": "initialPassword",
+      "value": "Initial@123"
+    },
+    {
+      "key": "hasPassword",
+      "value": ""
+    },
+    {
+      "key": "scope",
+      "value": "openid profile email"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "userEmail",
+      "value": "telecare.platform.cskh@gmail.com"
+    },
+    {
+      "key": "avatarUrl",
+      "value": "https://example.com/avatar.jpg"
+    },
+    {
+      "key": "phoneNumber",
+      "value": "0901234567"
+    },
+    {
+      "key": "roleId",
+      "value": ""
+    },
+    {
+      "key": "permissionId",
+      "value": ""
+    },
+    {
+      "key": "roleName",
+      "value": "TEST_ROLE"
+    },
+    {
+      "key": "permissionName",
+      "value": "TEST_PERMISSION"
+    },
+    {
+      "key": "adminAuthorities",
+      "value": "USER_VIEW,USER_CREATE,USER_UPDATE,ROLE_VIEW,ROLE_UPDATE,PERMISSION_VIEW,PERMISSION_UPDATE"
+    },
+    {
+      "key": "idToken",
+      "value": ""
+    },
+    {
+      "key": "adminCreateUsername",
+      "value": "system.user"
+    },
+    {
+      "key": "adminCreateEmail",
+      "value": "system.user@example.com"
+    },
+    {
+      "key": "adminCreatePhone",
+      "value": "0901234568"
+    },
+    {
+      "key": "createdUserId",
+      "value": ""
+    }
+  ]
+}
