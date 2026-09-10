@@ -1014,53 +1014,12 @@
           "response": []
         }
       ]
-    }
-  ],
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{accessToken}}",
-        "type": "string"
-      }
-    ]
-  },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "requests": {},
-        "exec": [
-          "if (!pm.collectionVariables.get('adminAuthorities')) {",
-          "  pm.collectionVariables.set('adminAuthorities', 'USER_VIEW,USER_CREATE,USER_UPDATE,ROLE_VIEW,ROLE_UPDATE,PERMISSION_VIEW,PERMISSION_UPDATE');",
-          "}",
-          "if (!pm.collectionVariables.get('roleName')) pm.collectionVariables.set('roleName', 'TEST_ROLE');",
-          "if (!pm.collectionVariables.get('permissionName')) pm.collectionVariables.set('permissionName', 'TEST_PERMISSION');",
-          "// Matches the BOOTSTRAP_ADMIN_* defaults seeded by telecare-backend on first run.",
-          "if (!pm.collectionVariables.get('username')) pm.collectionVariables.set('username', 'telecare');",
-          "if (!pm.collectionVariables.get('password')) pm.collectionVariables.set('password', 'Telecare@123');"
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    }
     },
     {
       "name": "Admin - Service Packages",
       "item": [
         {
-          "name": "Get Service Categories (Paged)",
+          "name": "01. Get Service Categories (Paged)",
           "request": {
             "method": "GET",
             "header": [
@@ -1096,10 +1055,29 @@
                 }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "const items = body.result?.result || [];",
+                  "if (items.length > 0 && items[0].id) {",
+                  "    pm.collectionVariables.set(\"categoryId\", items[0].id);",
+                  "    console.log(\"Auto-set categoryId to: \" + items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Get Service Categories (Dropdown All Active)",
+          "name": "02. Get Service Categories (Dropdown All Active)",
           "request": {
             "method": "GET",
             "header": [
@@ -1122,10 +1100,29 @@
                 "all"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "const items = body.result || [];",
+                  "if (items.length > 0 && items[0].id) {",
+                  "    pm.collectionVariables.set(\"categoryId\", items[0].id);",
+                  "    console.log(\"Auto-set categoryId to: \" + items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Create Service Category",
+          "name": "03. Create Service Category",
           "request": {
             "method": "POST",
             "header": [
@@ -1156,10 +1153,28 @@
                 "service-categories"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "if (body.result && body.result.id) {",
+                  "    pm.collectionVariables.set(\"categoryId\", body.result.id);",
+                  "    console.log(\"Created Category ID: \" + body.result.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Update Service Category",
+          "name": "04. Update Service Category",
           "request": {
             "method": "PUT",
             "header": [
@@ -1191,10 +1206,23 @@
                 "{{categoryId}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Enable Service Category",
+          "name": "05. Enable Service Category",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1218,10 +1246,23 @@
                 "enable"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Disable Service Category",
+          "name": "06. Disable Service Category",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1245,10 +1286,23 @@
                 "disable"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Get Service Plans (Paged)",
+          "name": "07. Get Service Plans (Paged)",
           "request": {
             "method": "GET",
             "header": [
@@ -1300,36 +1354,29 @@
                 }
               ]
             }
-          }
-        },
-        {
-          "name": "Get Service Plan Detail",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "const items = body.result?.result || [];",
+                  "if (items.length > 0 && items[0].id) {",
+                  "    pm.collectionVariables.set(\"planId\", items[0].id);",
+                  "    console.log(\"Auto-set planId to: \" + items[0].id);",
+                  "}"
+                ]
               }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/plans/{{planId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "plans",
-                "{{planId}}"
-              ]
             }
-          }
+          ]
         },
         {
-          "name": "Create Service Plan",
+          "name": "08. Create Service Plan",
           "request": {
             "method": "POST",
             "header": [
@@ -1360,10 +1407,67 @@
                 "plans"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "if (body.result && body.result.id) {",
+                  "    pm.collectionVariables.set(\"planId\", body.result.id);",
+                  "    console.log(\"Created Plan ID: \" + body.result.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Update Service Plan",
+          "name": "09. Get Service Plan Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/plans/{{planId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "plans",
+                "{{planId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Update Service Plan",
           "request": {
             "method": "PUT",
             "header": [
@@ -1395,10 +1499,23 @@
                 "{{planId}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Update Service Plan Status",
+          "name": "11. Update Service Plan Status",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1431,10 +1548,23 @@
                 "status"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Soft Delete Service Plan",
+          "name": "12. Soft Delete Service Plan",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1457,9 +1587,199 @@
                 "{{planId}}"
               ]
             }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Public - Service Packages",
+      "item": [
+        {
+          "name": "01. Get Public Service Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/service-categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "service-categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "02. Get Public Service Plans (Paged & Filtered)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans?keyword=&categoryCode=&minPrice=&maxPrice=&billingCycle=&highlighted=&page=0&size=10&sort=displayOrder,asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "plans"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": ""
+                },
+                {
+                  "key": "categoryCode",
+                  "value": ""
+                },
+                {
+                  "key": "minPrice",
+                  "value": ""
+                },
+                {
+                  "key": "maxPrice",
+                  "value": ""
+                },
+                {
+                  "key": "billingCycle",
+                  "value": ""
+                },
+                {
+                  "key": "highlighted",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "displayOrder,asc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "03. Get Public Service Plan Detail by Slug",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/plans/max100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "plans",
+                "max100"
+              ]
+            }
           }
         }
       ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "requests": {},
+        "exec": [
+          "if (!pm.collectionVariables.get('adminAuthorities')) {",
+          "  pm.collectionVariables.set('adminAuthorities', 'USER_VIEW,USER_CREATE,USER_UPDATE,ROLE_VIEW,ROLE_UPDATE,PERMISSION_VIEW,PERMISSION_UPDATE');",
+          "}",
+          "if (!pm.collectionVariables.get('roleName')) pm.collectionVariables.set('roleName', 'TEST_ROLE');",
+          "if (!pm.collectionVariables.get('permissionName')) pm.collectionVariables.set('permissionName', 'TEST_PERMISSION');",
+          "// Matches the BOOTSTRAP_ADMIN_* defaults seeded by telecare-backend on first run.",
+          "if (!pm.collectionVariables.get('username')) pm.collectionVariables.set('username', 'telecare');",
+          "if (!pm.collectionVariables.get('password')) pm.collectionVariables.set('password', 'Telecare@123');"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
     }
   ],
   "variable": [
@@ -1569,6 +1889,14 @@
     },
     {
       "key": "createdUserId",
+      "value": ""
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "planId",
       "value": ""
     }
   ]

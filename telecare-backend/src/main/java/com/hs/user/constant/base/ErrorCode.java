@@ -57,6 +57,8 @@ public enum ErrorCode {
     DUPLICATE_PLAN_FEATURE(1407, "Duplicate plan feature code in package", HttpStatus.BAD_REQUEST),
     INVALID_PLAN_STATUS_TRANSITION(1408, "Invalid service plan status transition", HttpStatus.BAD_REQUEST),
     DELETED_PLAN_CANNOT_BE_UPDATED(1409, "Deleted service plan cannot be updated", HttpStatus.BAD_REQUEST),
+    INVALID_PRICE_RANGE(1410, "Minimum price cannot be greater than maximum price", HttpStatus.BAD_REQUEST),
+    INVALID_SORT_FIELD(1411, "Invalid sort field", HttpStatus.BAD_REQUEST),
     // STORAGE / FILE
     INVALID_FILE(1501, "Invalid file", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED(1502, "File upload failed", HttpStatus.INTERNAL_SERVER_ERROR),

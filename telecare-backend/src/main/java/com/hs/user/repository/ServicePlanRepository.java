@@ -25,4 +25,7 @@ public interface ServicePlanRepository extends JpaRepository<ServicePlan, String
 
     @Query("SELECT DISTINCT p FROM ServicePlan p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.features WHERE p.id = :id")
     Optional<ServicePlan> findDetailById(@Param("id") String id);
+
+    @Query("SELECT DISTINCT p FROM ServicePlan p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.features WHERE LOWER(p.slug) = LOWER(:slug) AND p.status = com.hs.user.model.constant.PlanStatus.PUBLISHED AND p.active = true AND p.category.active = true")
+    Optional<ServicePlan> findPublicDetailBySlug(@Param("slug") String slug);
 }
