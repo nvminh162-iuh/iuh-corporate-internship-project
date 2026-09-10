@@ -62,6 +62,14 @@ public enum ErrorCode {
     // STORAGE / FILE
     INVALID_FILE(1501, "Invalid file", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED(1502, "File upload failed", HttpStatus.INTERNAL_SERVER_ERROR),
+    // SUPPORT REQUEST (1601-1699)
+    SUPPORT_CATEGORY_NOT_EXISTED(1601, "Support category does not exist or is inactive", HttpStatus.NOT_FOUND),
+    SUPPORT_REQUEST_NOT_EXISTED(1602, "Support request not existed", HttpStatus.NOT_FOUND),
+    INVALID_SUPPORT_REQUEST_STATUS(1603, "Invalid support request status transition", HttpStatus.BAD_REQUEST),
+    CLOSED_TICKET_CANNOT_BE_UPDATED(1604, "Closed support request cannot be updated", HttpStatus.BAD_REQUEST),
+    SUPPORT_REQUEST_NOTE_REQUIRED(1605, "Note or resolution details required for this status change", HttpStatus.BAD_REQUEST),
+    TICKET_MUST_BE_RECEIVED_FIRST(1606, "Ticket must be received before processing or assigning", HttpStatus.BAD_REQUEST),
+    STAFF_NOT_FOUND(1607, "Assigned staff user does not exist", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

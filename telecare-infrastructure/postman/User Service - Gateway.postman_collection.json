@@ -1014,6 +1014,211 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Admin - Support Requests",
+      "item": [
+        {
+          "name": "01. Danh sách yêu cầu hỗ trợ (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?page=0&size=10&status=NEW",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "keyword",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "NEW"
+                },
+                {
+                  "key": "categoryCode",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "assignedTo",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "02. Xem chi tiết yêu cầu hỗ trợ (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "03. Tiếp nhận Ticket (Admin/Staff)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/receive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "receive"
+              ]
+            }
+          }
+        },
+        {
+          "name": "04. Phân công Ticket cho Nhân viên",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignedTo\": \"staff-user-id-here\",\n  \"note\": \"Phân công xử lý sự cố cho nhân viên hỗ trợ\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "assign"
+              ]
+            }
+          }
+        },
+        {
+          "name": "05. Cập nhật Trạng thái Ticket",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"note\": \"Đã xử lý dứt điểm sự cố mạng\",\n  \"resolution\": \"Đã reset cổng modem và thay dây mạng CAT6 mới\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "06. Thêm Ghi chú / Lịch sử xử lý",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Liên hệ trực tiếp khách hàng qua điện thoại để kiểm tra tín hiệu thành công\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/histories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "histories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "07. Lấy danh sách lịch sử xử lý",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/histories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "histories"
+              ]
+            }
+          }
+        }
+      ]
     }
   ],
   "auth": {

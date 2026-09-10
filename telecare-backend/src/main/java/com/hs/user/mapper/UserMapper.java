@@ -32,6 +32,30 @@ public class UserMapper {
                 .build();
     }
 
+    public static UserResponse mapToUserResponse(User user) {
+        if (user == null) {
+            return null;
+        }
+        return UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .emailVerified(user.getEmailVerified())
+                .avatarUrl(user.getAvatarUrl())
+                .phone(user.getPhone())
+                .dob(user.getDob())
+                .gender(user.getGender())
+                .roleId(user.getRole() != null ? user.getRole().getId() : null)
+                .role(user.getRole() != null ? user.getRole().getName() : null)
+                .onBoarded(user.getOnBoarded())
+                .active(user.getActive())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
+    }
+
     public static UserResponse mapToUserResponse(User user, Map<String, User> actors) {
         return UserResponse.builder()
                 .id(user.getId())

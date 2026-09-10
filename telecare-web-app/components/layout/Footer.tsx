@@ -40,10 +40,10 @@ export default function Footer() {
               Dịch vụ viễn thông
             </h4>
             <nav className="flex flex-col space-y-2 text-sm text-slate-200 dark:text-slate-300">
-              <Link href="#" className="hover:text-white transition-colors">
+              <Link href="/" className="hover:text-white transition-colors">
                 Tra cứu gói cước
               </Link>
-              <Link href="#" className="hover:text-white transition-colors">
+              <Link href="/support/new" className="hover:text-white transition-colors">
                 Gửi yêu cầu hỗ trợ
               </Link>
               <Link href="#" className="hover:text-white transition-colors">

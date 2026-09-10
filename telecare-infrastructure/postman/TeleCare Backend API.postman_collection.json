@@ -1740,6 +1740,302 @@
           }
         }
       ]
+    },
+    {
+      "name": "Customer - Support Requests",
+      "item": [
+        {
+          "name": "Get Support Categories (Public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support-categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support-categories"
+              ]
+            },
+            "description": "Get all active support categories (Public/Guest access allowed)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Support Request (Customer Authenticated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.result && json.result.ticketCode) {",
+                  "  pm.collectionVariables.set(\"lastTicketCode\", json.result.ticketCode);",
+                  "  console.log(\"Saved lastTicketCode: \" + json.result.ticketCode);",
+                  "}",
+                  "pm.test(\"Status code is 201 CREATED\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Ticket code generated with SR- prefix\", function () {",
+                  "  pm.expect(json.result.ticketCode).to.match(/^SR-/);",
+                  "});",
+                  "pm.test(\"Ticket status is NEW\", function () {",
+                  "  pm.expect(json.result.status).to.eql(\"NEW\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryCode\": \"CONNECTION\",\n  \"servicePlanId\": \"\",\n  \"subject\": \"Kết nối Internet đường truyền không ổn định\",\n  \"content\": \"Tín hiệu mạng bị chập chờn gián đoạn liên tục từ sáng nay, đề nghị kỹ thuật kiểm tra giúp tôi.\",\n  \"contactPhone\": \"0987654321\",\n  \"contactEmail\": \"zolaracskh@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support-requests"
+              ]
+            },
+            "description": "Customer submits a new support request ticket (requires Keycloak Bearer token)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Support Requests",
+      "item": [
+        {
+          "name": "01. Danh sách yêu cầu hỗ trợ (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?page=0&size=10&status=NEW",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "keyword",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "NEW"
+                },
+                {
+                  "key": "categoryCode",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "assignedTo",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "02. Xem chi tiết yêu cầu hỗ trợ (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "03. Tiếp nhận Ticket (Admin/Staff)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/receive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "receive"
+              ]
+            }
+          }
+        },
+        {
+          "name": "04. Phân công Ticket cho Nhân viên",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignedTo\": \"staff-user-id-here\",\n  \"note\": \"Phân công xử lý sự cố cho nhân viên hỗ trợ\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "assign"
+              ]
+            }
+          }
+        },
+        {
+          "name": "05. Cập nhật Trạng thái Ticket",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"note\": \"Đã xử lý dứt điểm sự cố mạng\",\n  \"resolution\": \"Đã reset cổng modem và thay dây mạng CAT6 mới\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "06. Thêm Ghi chú / Lịch sử xử lý",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Liên hệ trực tiếp khách hàng qua điện thoại để kiểm tra tín hiệu thành công\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/histories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "histories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "07. Lấy danh sách lịch sử xử lý",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/histories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "histories"
+              ]
+            }
+          }
+        }
+      ]
     }
   ],
   "auth": {

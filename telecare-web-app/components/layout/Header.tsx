@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/features/auth/useAuth";
 import { Button } from "@/components/ui/button";
 import UserDropdown from "./UserDropdown";
-import { Menu, X, Smartphone } from "lucide-react";
+import { Menu, X, Smartphone, HelpCircle } from "lucide-react";
 
 export default function Header() {
   const { authenticated, login, register, logout, username, avatarUrl } =
@@ -73,12 +73,29 @@ export default function Header() {
             {authenticated ? (
               /* State 1: Authenticated User */
               <div className="flex items-center gap-3">
+                <Link
+                  href="/support/new"
+                  className="h-10 flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors px-3 rounded-full hover:bg-muted"
+                >
+                  <HelpCircle className="w-4 h-4 text-primary" />
+                  <span>Gửi hỗ trợ</span>
+                </Link>
+
                 {/* User Dropdown */}
                 <UserDropdown />
               </div>
             ) : (
               /* State 2: Guest / Unauthenticated */
               <div className="flex items-center gap-3">
+                {/* Gửi hỗ trợ */}
+                <Link
+                  href="/support/new"
+                  className="h-10 flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors px-3 rounded-full hover:bg-muted"
+                >
+                  <HelpCircle className="w-4 h-4 text-primary" />
+                  <span>Gửi hỗ trợ</span>
+                </Link>
+
                 {/* Tải ứng dụng */}
                 <Link
                   href="#download-app"

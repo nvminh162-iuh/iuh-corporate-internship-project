@@ -44,7 +44,9 @@ public class SecurityConfig {
                                 "/plans",
                                 "/plans/**",
                                 "/service-categories",
-                                "/service-categories/**"
+                                "/service-categories/**",
+                                "/support-categories",
+                                "/support-categories/**"
                         ).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated())

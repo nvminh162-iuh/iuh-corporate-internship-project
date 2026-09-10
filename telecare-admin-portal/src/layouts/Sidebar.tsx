@@ -11,6 +11,7 @@ import {
   Package,
   FolderTree,
   Boxes,
+  LifeBuoy,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -47,6 +48,11 @@ const MENU_ITEMS: MenuItem[] = [
       { title: "Gói cước", path: "/plans", icon: Package },
       { title: "Nhóm dịch vụ", path: "/plans/categories", icon: FolderTree },
     ],
+  },
+  {
+    title: "Yêu cầu hỗ trợ",
+    path: "/admin/support-requests",
+    icon: LifeBuoy,
   },
   {
     title: "Cài đặt",

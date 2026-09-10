@@ -10,6 +10,8 @@ import RolesPage from "@/pages/users/RolesPage";
 import PermissionsPage from "@/pages/users/PermissionsPage";
 import PlansPage from "@/pages/plans/PlansPage";
 import CategoriesPage from "@/pages/plans/CategoriesPage";
+import SupportRequestsPage from "@/pages/support/SupportRequestsPage";
+import SupportRequestDetailPage from "@/pages/support/SupportRequestDetailPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import NotFoundPage from "@/pages/not-found/NotFoundPage";
 
@@ -44,11 +46,18 @@ export default function AppRouter() {
           <Route path="categories" element={<CategoriesPage />} />
         </Route>
 
+        {/* Support Request Routes */}
+        <Route path="admin/support-requests">
+          <Route index element={<SupportRequestsPage />} />
+          <Route path=":id" element={<SupportRequestDetailPage />} />
+        </Route>
+
         {/* Support /dashboard/users aliases */}
         <Route path="/dashboard/users" element={<Navigate to="/users" replace />} />
         <Route path="/dashboard/users/roles" element={<Navigate to="/users/roles" replace />} />
         <Route path="/dashboard/users/permissions" element={<Navigate to="/users/permissions" replace />} />
         <Route path="/dashboard/plans" element={<Navigate to="/plans" replace />} />
+        <Route path="/support-requests" element={<Navigate to="/admin/support-requests" replace />} />
 
         {/* Settings */}
         <Route path="settings" element={<SettingsPage />} />
