@@ -24,7 +24,8 @@ export default function Footer() {
             </Link>
 
             <p className="text-sm text-slate-200 dark:text-slate-300 leading-relaxed max-w-sm">
-              TeleCare - Cổng tra cứu gói cước và tiếp nhận yêu cầu hỗ trợ khách hàng viễn thông.
+              TeleCare - Cổng tra cứu gói cước và tiếp nhận yêu cầu hỗ trợ khách
+              hàng viễn thông.
             </p>
 
             <div className="flex items-center gap-3 text-xs text-emerald-400 font-medium">
@@ -65,11 +66,11 @@ export default function Footer() {
                 <span>Tổng đài CSKH 24/7</span>
               </div>
               <a
-                href="mailto:telecare.platform.cskh@gmail.com"
+                href="mailto:zolaracskh@gmail.com"
                 className="hover:text-cyan-300 transition-colors flex items-center gap-2 text-slate-200 dark:text-slate-300"
               >
                 <Mail className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span className="truncate">telecare.platform.cskh@gmail.com</span>
+                <span className="truncate">zolaracskh@gmail.com</span>
               </a>
             </div>
           </div>

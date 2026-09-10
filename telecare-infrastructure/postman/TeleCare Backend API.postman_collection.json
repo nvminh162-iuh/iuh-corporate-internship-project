@@ -1055,6 +1055,412 @@
         ]
       }
     }
+    },
+    {
+      "name": "Admin - Service Packages",
+      "item": [
+        {
+          "name": "Get Service Categories (Paged)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/service-categories?page=0&size=10&sort=createdAt,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "service-categories"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Service Categories (Dropdown All Active)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/service-categories/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "service-categories",
+                "all"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Service Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"INTERNET\",\n  \"name\": \"Internet Broadband\",\n  \"description\": \"Fibervnn high speed internet services\",\n  \"displayOrder\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/service-categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "service-categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Service Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"INTERNET_FIBER\",\n  \"name\": \"Internet Fiber High-Speed\",\n  \"description\": \"Updated fiber optic broadband\",\n  \"displayOrder\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/service-categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "service-categories",
+                "{{categoryId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Enable Service Category",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/service-categories/{{categoryId}}/enable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "service-categories",
+                "{{categoryId}}",
+                "enable"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Disable Service Category",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/service-categories/{{categoryId}}/disable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "service-categories",
+                "{{categoryId}}",
+                "disable"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Service Plans (Paged)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/plans?page=0&size=10&sort=createdAt,desc&keyword=&categoryId=&status=&active=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "plans"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc"
+                },
+                {
+                  "key": "keyword",
+                  "value": ""
+                },
+                {
+                  "key": "categoryId",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "active",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Service Plan Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/plans/{{planId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "plans",
+                "{{planId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Service Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"HOME_NET_1\",\n  \"slug\": \"home-net-1\",\n  \"name\": \"Home Net 1 Package\",\n  \"summary\": \"Internet for small families\",\n  \"description\": \"Detailed description of Home Net 1 package with unlimited traffic\",\n  \"price\": 220000.00,\n  \"currency\": \"VND\",\n  \"billingCycle\": \"MONTH\",\n  \"status\": \"DRAFT\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"highlighted\": true,\n  \"displayOrder\": 1,\n  \"features\": [\n    {\n      \"code\": \"DOWNLOAD_SPEED\",\n      \"name\": \"Download Speed\",\n      \"value\": \"150 Mbps\",\n      \"unit\": \"Mbps\",\n      \"displayOrder\": 1\n    },\n    {\n      \"code\": \"FREE_MODEM\",\n      \"name\": \"Free Wifi 6 Modem\",\n      \"value\": \"Included\",\n      \"unit\": \"\",\n      \"displayOrder\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "plans"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Service Plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"HOME_NET_1\",\n  \"slug\": \"home-net-1\",\n  \"name\": \"Home Net 1 Super\",\n  \"summary\": \"Upgraded Internet for small families\",\n  \"description\": \"Updated details for Home Net 1 package with Mesh Wi-Fi\",\n  \"price\": 250000.00,\n  \"currency\": \"VND\",\n  \"billingCycle\": \"MONTH\",\n  \"status\": \"PUBLISHED\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"highlighted\": true,\n  \"displayOrder\": 1,\n  \"features\": [\n    {\n      \"code\": \"DOWNLOAD_SPEED\",\n      \"name\": \"Download Speed\",\n      \"value\": \"200 Mbps\",\n      \"unit\": \"Mbps\",\n      \"displayOrder\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/plans/{{planId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "plans",
+                "{{planId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Service Plan Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PUBLISHED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/plans/{{planId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "plans",
+                "{{planId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Soft Delete Service Plan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/plans/{{planId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "plans",
+                "{{planId}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
   ],
   "variable": [
     {
@@ -1115,7 +1521,7 @@
     },
     {
       "key": "userEmail",
-      "value": "telecare.platform.cskh@gmail.com"
+      "value": "zolaracskh@gmail.com"
     },
     {
       "key": "avatarUrl",

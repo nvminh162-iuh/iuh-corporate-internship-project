@@ -47,6 +47,16 @@ public enum ErrorCode {
     KEYCLOAK_CREDENTIAL_READ_FAILED(1303, "Could not read Keycloak credentials", HttpStatus.BAD_GATEWAY),
     KEYCLOAK_USER_CREATE_FAILED(1304, "Keycloak user creation failed", HttpStatus.BAD_GATEWAY),
     KEYCLOAK_INVITATION_SEND_FAILED(1305, "Failed to send invitation email", HttpStatus.BAD_GATEWAY),
+    // SERVICE CATEGORY & PLAN (1401-1499)
+    CATEGORY_NOT_EXISTED(1401, "Service category not existed", HttpStatus.NOT_FOUND),
+    CATEGORY_CODE_EXISTED(1402, "Service category code existed", HttpStatus.BAD_REQUEST),
+    CATEGORY_HAS_ACTIVE_PLANS(1403, "Service category has active service plans", HttpStatus.BAD_REQUEST),
+    PLAN_NOT_EXISTED(1404, "Service plan not existed", HttpStatus.NOT_FOUND),
+    PLAN_CODE_EXISTED(1405, "Service plan code existed", HttpStatus.BAD_REQUEST),
+    PLAN_SLUG_EXISTED(1406, "Service plan slug existed", HttpStatus.BAD_REQUEST),
+    DUPLICATE_PLAN_FEATURE(1407, "Duplicate plan feature code in package", HttpStatus.BAD_REQUEST),
+    INVALID_PLAN_STATUS_TRANSITION(1408, "Invalid service plan status transition", HttpStatus.BAD_REQUEST),
+    DELETED_PLAN_CANNOT_BE_UPDATED(1409, "Deleted service plan cannot be updated", HttpStatus.BAD_REQUEST),
     // STORAGE / FILE
     INVALID_FILE(1501, "Invalid file", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED(1502, "File upload failed", HttpStatus.INTERNAL_SERVER_ERROR),

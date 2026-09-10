@@ -1,63 +1,63 @@
 services:
-    #  =================================================================
-    #  pgAdmin
-    #  =================================================================
-    pgadmin:
-        image: dpage/pgadmin4:latest
-        container_name: telecare-pgadmin
-        restart: unless-stopped
-        environment:
-            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-telecare.platform.cskh@gmail.com}
-            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-telecare123}
-            PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-        ports:
-            - '55050:80'
-        volumes:
-            - telecare-pgadmin-data:/var/lib/pgadmin
-            - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
-        networks:
-            - telecare-network
+  #  =================================================================
+  #  pgAdmin
+  #  =================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: telecare-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-zolaracskh@gmail.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-telecare123}
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "55050:80"
+    volumes:
+      - telecare-pgadmin-data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    networks:
+      - telecare-network
 
-    #  =================================================================
-    #  RedisInsight
-    #  =================================================================
-    redis-insight:
-        image: redis/redisinsight:latest
-        container_name: telecare-redis-insight
-        restart: unless-stopped
-        ports:
-            - '55540:5540'
-        volumes:
-            - telecare-redis-insight-data:/data
-        networks:
-            - telecare-network
+  #  =================================================================
+  #  RedisInsight
+  #  =================================================================
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: telecare-redis-insight
+    restart: unless-stopped
+    ports:
+      - "55540:5540"
+    volumes:
+      - telecare-redis-insight-data:/data
+    networks:
+      - telecare-network
 
-    #  =================================================================
-    #  Kafka UI
-    #  =================================================================
-    kafka-ui:
-        image: provectuslabs/kafka-ui:latest
-        container_name: telecare-kafka-ui
-        restart: unless-stopped
-        ports:
-            - '59022:9022'
-        environment:
-            SERVER_PORT: 9022
-            KAFKA_CLUSTERS_0_NAME: Telecare
-            KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
-        networks:
-            - telecare-network
+  #  =================================================================
+  #  Kafka UI
+  #  =================================================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: telecare-kafka-ui
+    restart: unless-stopped
+    ports:
+      - "59022:9022"
+    environment:
+      SERVER_PORT: 9022
+      KAFKA_CLUSTERS_0_NAME: Telecare
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
+    networks:
+      - telecare-network
 
 volumes:
-    telecare-pgadmin-data:
-        name: telecare-pgadmin-data
-    telecare-redis-insight-data:
-        name: telecare-redis-insight-data
+  telecare-pgadmin-data:
+    name: telecare-pgadmin-data
+  telecare-redis-insight-data:
+    name: telecare-redis-insight-data
 
 networks:
-    telecare-network:
-        name: telecare-network
-        external: true
+  telecare-network:
+    name: telecare-network
+    external: true
 
 #  =================================================================
 #  Usage
@@ -73,7 +73,7 @@ networks:
 #
 #  pgAdmin:
 #    URL: http://localhost:55050
-#    Login email: telecare.platform.cskh@gmail.com
+#    Login email: zolaracskh@gmail.com
 #    Login password: telecare123
 #    PostgreSQL host: postgres
 #    PostgreSQL port: 5432

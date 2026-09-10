@@ -20,5 +20,13 @@ public final class PermissionConstants {
         public static final String PERMISSION_CREATE = "PERMISSION_CREATE";
         public static final String PERMISSION_UPDATE = "PERMISSION_UPDATE";
         public static final String PERMISSION_DELETE = "PERMISSION_DELETE";
+        public static final String PLAN_VIEW = "PLAN_VIEW";
+        public static final String PLAN_CREATE = "PLAN_CREATE";
+        public static final String PLAN_UPDATE = "PLAN_UPDATE";
+        public static final String PLAN_DELETE = "PLAN_DELETE";
+        public static final String CATEGORY_VIEW = "CATEGORY_VIEW";
+        public static final String CATEGORY_CREATE = "CATEGORY_CREATE";
+        public static final String CATEGORY_UPDATE = "CATEGORY_UPDATE";
+        public static final String CATEGORY_DELETE = "CATEGORY_DELETE";
     }
 }

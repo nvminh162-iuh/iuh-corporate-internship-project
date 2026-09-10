@@ -8,6 +8,9 @@ import {
   ShieldCheck,
   UserCheck,
   KeyRound,
+  Package,
+  FolderTree,
+  Boxes,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -38,6 +41,14 @@ const MENU_ITEMS: MenuItem[] = [
     ],
   },
   {
+    title: "Quản lý dịch vụ",
+    icon: Boxes,
+    children: [
+      { title: "Gói cước", path: "/plans", icon: Package },
+      { title: "Nhóm dịch vụ", path: "/plans/categories", icon: FolderTree },
+    ],
+  },
+  {
     title: "Cài đặt",
     path: "/settings",
     icon: Settings,
@@ -50,6 +61,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   // Keep track of open submenu groups
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     "Quản lý tài khoản": true,
+    "Quản lý dịch vụ": true,
   });
 
   const toggleGroup = (title: string) => {
