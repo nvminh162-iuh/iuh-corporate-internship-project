@@ -1,6 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { Check, Eye, EyeOff, LoaderCircle, LockKeyhole, UserRound } from "lucide-react";
+import {
+  Check,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  LockKeyhole,
+  UserRound,
+} from "lucide-react";
 import userService from "@/services/user.service";
 import { fetchCurrentUser } from "@/features/user/userSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -117,7 +124,9 @@ export default function OnboardingInitializer() {
     setError(null);
     try {
       await userService.completeOnboarding(request);
-      await dispatch(fetchCurrentUser({ userId: userId!, force: true })).unwrap();
+      await dispatch(
+        fetchCurrentUser({ userId: userId!, force: true }),
+      ).unwrap();
 
       if (hasPassword === false) {
         toast.success("Thông tin cá nhân đã được cập nhật.");
@@ -167,7 +176,7 @@ export default function OnboardingInitializer() {
             Thiết lập tài khoản
           </p>
           <h2 className="mt-1 text-xl font-extrabold text-foreground sm:text-2xl">
-            Chào mừng bạn đến với HomeSpace
+            Chào mừng bạn đến với Telecare
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Hoàn thành các bước dưới đây để bắt đầu sử dụng tài khoản.
@@ -234,9 +243,15 @@ function StepIndicator({
                   : "bg-muted text-muted-foreground"
               }`}
             >
-              {completed ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+              {completed ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <Icon className="h-4 w-4" />
+              )}
             </div>
-            <span className={`truncate text-xs font-semibold ${active ? "text-foreground" : "text-muted-foreground"}`}>
+            <span
+              className={`truncate text-xs font-semibold ${active ? "text-foreground" : "text-muted-foreground"}`}
+            >
               {index + 1}. {label}
             </span>
           </div>
@@ -258,7 +273,10 @@ function ProfileStep({
   const [form, setForm] = useState(() => profileToForm(profile));
   const [saving, setSaving] = useState(false);
 
-  function setField<K extends keyof OnboardingForm>(key: K, value: OnboardingForm[K]) {
+  function setField<K extends keyof OnboardingForm>(
+    key: K,
+    value: OnboardingForm[K],
+  ) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
@@ -284,15 +302,43 @@ function ProfileStep({
     <form onSubmit={submit} className="space-y-4">
       {error && <ErrorBox message={error} />}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Input label="Tên" value={form.firstName} onValueChange={(value) => setField("firstName", value)} minLength={2} maxLength={50} />
-        <Input label="Họ" value={form.lastName} onValueChange={(value) => setField("lastName", value)} minLength={2} maxLength={50} />
-        <Input label="Số điện thoại" value={form.phone} onValueChange={(value) => setField("phone", value.replace(/\D/g, ""))} inputMode="numeric" pattern="[0-9]{10,15}" />
-        <Input label="Ngày sinh" value={form.dob} onValueChange={(value) => setField("dob", value)} type="date" max={getLatestAdultBirthDate()} />
+        <Input
+          label="Tên"
+          value={form.firstName}
+          onValueChange={(value) => setField("firstName", value)}
+          minLength={2}
+          maxLength={50}
+        />
+        <Input
+          label="Họ"
+          value={form.lastName}
+          onValueChange={(value) => setField("lastName", value)}
+          minLength={2}
+          maxLength={50}
+        />
+        <Input
+          label="Số điện thoại"
+          value={form.phone}
+          onValueChange={(value) => setField("phone", value.replace(/\D/g, ""))}
+          inputMode="numeric"
+          pattern="[0-9]{10,15}"
+        />
+        <Input
+          label="Ngày sinh"
+          value={form.dob}
+          onValueChange={(value) => setField("dob", value)}
+          type="date"
+          max={getLatestAdultBirthDate()}
+        />
         <label className="space-y-1.5 sm:col-span-2 block">
-          <span className="text-xs font-semibold text-foreground">Giới tính</span>
+          <span className="text-xs font-semibold text-foreground">
+            Giới tính
+          </span>
           <select
             value={form.gender}
-            onChange={(event) => setField("gender", event.target.value as OnboardingForm["gender"])}
+            onChange={(event) =>
+              setField("gender", event.target.value as OnboardingForm["gender"])
+            }
             className="h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-primary cursor-pointer"
           >
             <option value="OTHER">Khác</option>
@@ -301,7 +347,11 @@ function ProfileStep({
           </select>
         </label>
       </div>
-      <button type="submit" disabled={saving} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-60">
+      <button
+        type="submit"
+        disabled={saving}
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-60"
+      >
         {saving && <LoaderCircle className="h-4 w-4 animate-spin" />}
         {saving ? "Đang lưu..." : "Lưu và tiếp tục"}
       </button>
@@ -341,16 +391,35 @@ function PasswordStep({
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      {(localError || error) && <ErrorBox message={localError || error || ""} />}
+      {(localError || error) && (
+        <ErrorBox message={localError || error || ""} />
+      )}
       <p className="rounded-xl bg-primary/10 p-3 text-xs leading-5 text-primary border border-primary/20">
-        Tài khoản đăng nhập mạng xã hội chưa có mật khẩu. Hãy tạo mật khẩu để có thể đăng nhập bằng email, username hoặc số điện thoại.
+        Tài khoản đăng nhập mạng xã hội chưa có mật khẩu. Hãy tạo mật khẩu để có
+        thể đăng nhập bằng email, username hoặc số điện thoại.
       </p>
-      <PasswordInput label="Mật khẩu mới" value={password} onChange={setPassword} visible={showPassword} onToggle={() => setShowPassword((value) => !value)} />
-      <PasswordInput label="Xác nhận mật khẩu" value={confirmPassword} onChange={setConfirmPassword} visible={showPassword} onToggle={() => setShowPassword((value) => !value)} />
+      <PasswordInput
+        label="Mật khẩu mới"
+        value={password}
+        onChange={setPassword}
+        visible={showPassword}
+        onToggle={() => setShowPassword((value) => !value)}
+      />
+      <PasswordInput
+        label="Xác nhận mật khẩu"
+        value={confirmPassword}
+        onChange={setConfirmPassword}
+        visible={showPassword}
+        onToggle={() => setShowPassword((value) => !value)}
+      />
       <p className="text-[11px] leading-5 text-muted-foreground">
         Tối thiểu 8 ký tự, gồm chữ hoa, số và ký tự đặc biệt.
       </p>
-      <button type="submit" disabled={saving} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-60">
+      <button
+        type="submit"
+        disabled={saving}
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-60"
+      >
         {saving && <LoaderCircle className="h-4 w-4 animate-spin" />}
         {saving ? "Đang tạo mật khẩu..." : "Hoàn tất thiết lập"}
       </button>
@@ -369,19 +438,51 @@ function Input({
   return (
     <label className="space-y-1.5 block">
       <span className="text-xs font-semibold text-foreground">{label}</span>
-      <input {...props} onChange={(event) => onValueChange(event.target.value)} className="h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-primary" />
+      <input
+        {...props}
+        onChange={(event) => onValueChange(event.target.value)}
+        className="h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-primary"
+      />
     </label>
   );
 }
 
-function PasswordInput({ label, value, onChange, visible, onToggle }: { label: string; value: string; onChange: (value: string) => void; visible: boolean; onToggle: () => void }) {
+function PasswordInput({
+  label,
+  value,
+  onChange,
+  visible,
+  onToggle,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  visible: boolean;
+  onToggle: () => void;
+}) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-semibold text-foreground">{label}</span>
       <span className="relative block">
-        <input type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} required minLength={8} className="h-11 w-full rounded-xl border border-border bg-background px-3.5 pr-11 text-sm outline-none focus:border-primary" />
-        <button type="button" onClick={onToggle} className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground cursor-pointer" aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>
-          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        <input
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          required
+          minLength={8}
+          className="h-11 w-full rounded-xl border border-border bg-background px-3.5 pr-11 text-sm outline-none focus:border-primary"
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground cursor-pointer"
+          aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+        >
+          {visible ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
         </button>
       </span>
     </label>
@@ -389,5 +490,9 @@ function PasswordInput({ label, value, onChange, visible, onToggle }: { label: s
 }
 
 function ErrorBox({ message }: { message: string }) {
-  return <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-semibold text-destructive">{message}</div>;
+  return (
+    <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-semibold text-destructive">
+      {message}
+    </div>
+  );
 }

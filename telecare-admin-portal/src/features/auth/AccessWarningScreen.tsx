@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  LogOut,
-  ExternalLink,
-  Home,
-  ShieldCheck,
-  Lock,
-} from "lucide-react";
+import { LogOut, ExternalLink, Home, ShieldCheck, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import UserAvatar from "@/components/common/UserAvatar";
@@ -118,8 +112,9 @@ export default function AccessWarningScreen({
               Bạn không có quyền truy cập tài nguyên này
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Khu vực này được bảo vệ nghiêm ngặt và chỉ cho phép tài khoản có vai trò{" "}
-              <strong className="text-primary font-bold">ADMIN</strong> truy cập.
+              Khu vực này được bảo vệ nghiêm ngặt và chỉ cho phép tài khoản có
+              vai trò <strong className="text-primary font-bold">ADMIN</strong>{" "}
+              truy cập.
             </p>
           </div>
         </div>
@@ -133,7 +128,9 @@ export default function AccessWarningScreen({
               sizeClassName="w-11 h-11 text-base shadow-xs"
             />
             <div className="min-w-0">
-              <p className="text-sm font-bold text-foreground truncate">{fullName}</p>
+              <p className="text-sm font-bold text-foreground truncate">
+                {fullName}
+              </p>
               <p className="text-xs text-muted-foreground font-mono truncate">
                 @{profile.username}
               </p>
@@ -203,7 +200,7 @@ export default function AccessWarningScreen({
 
       {/* Footer Branding */}
       <footer className="mt-8 text-center text-xs text-muted-foreground font-medium">
-        © 2026 HomeSpace Platform • Bảo mật phân quyền RBAC
+        © 2026 Telecare Platform • Bảo mật phân quyền RBAC
       </footer>
     </div>
   );

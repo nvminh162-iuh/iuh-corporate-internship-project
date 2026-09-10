@@ -9,7 +9,8 @@ import UserDropdown from "./UserDropdown";
 import { Menu, X, Smartphone } from "lucide-react";
 
 export default function Header() {
-  const { authenticated, login, register, logout, username, avatarUrl } = useAuth();
+  const { authenticated, login, register, logout, username, avatarUrl } =
+    useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Silky smooth animated glide to top (550ms easeOutCubic)
@@ -19,7 +20,8 @@ export default function Header() {
     if (window.location.pathname === "/") {
       e.preventDefault();
 
-      const startPosition = window.pageYOffset || document.documentElement.scrollTop;
+      const startPosition =
+        window.pageYOffset || document.documentElement.scrollTop;
       if (startPosition <= 0) return;
 
       const duration = 550; // ms
@@ -173,7 +175,7 @@ export default function Header() {
                 className="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-foreground hover:bg-muted flex items-center gap-3 transition-colors"
               >
                 <Smartphone className="w-4 h-4 text-accent-ai" />
-                <span>Tải ứng dụng HomeSpace</span>
+                <span>Tải ứng dụng Telecare</span>
               </Link>
               <div className="flex gap-2 w-full pt-1">
                 <Button

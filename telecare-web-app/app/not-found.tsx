@@ -40,7 +40,8 @@ export default function NotFound() {
             Oops! Không tìm thấy trang này
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mb-6">
-            Căn nhà bạn đang tìm kiếm dường như không tồn tại, đã đổi địa chỉ hoặc người thuê trước đã chuyển đi mất rồi!
+            Căn nhà bạn đang tìm kiếm dường như không tồn tại, đã đổi địa chỉ
+            hoặc người thuê trước đã chuyển đi mất rồi!
           </p>
 
           {/* 3. Action Navigation Buttons (Về trang chủ hoặc Thử lại F5) */}
@@ -67,7 +68,7 @@ export default function NotFound() {
 
       {/* Sleek Minimalist 1-Line Bottom Text */}
       <div className="py-3 text-center text-[11px] text-muted-foreground/60 border-t border-border/40 shrink-0">
-        © 2026 HomeSpace. Nền tảng thuê nhà trực tiếp & bảo vệ cọc On-chain.
+        © 2026 Telecare. Nền tảng thuê nhà trực tiếp & bảo vệ cọc On-chain.
       </div>
     </div>
   );

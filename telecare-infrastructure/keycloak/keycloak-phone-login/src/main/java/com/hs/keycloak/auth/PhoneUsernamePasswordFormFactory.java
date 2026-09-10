@@ -15,7 +15,8 @@ import org.keycloak.provider.ProviderConfigProperty;
 
 public class PhoneUsernamePasswordFormFactory implements AuthenticatorFactory {
 
-    // Keycloak stores authenticator provider IDs in AUTHENTICATION_EXECUTION.AUTHENTICATOR,
+    // Keycloak stores authenticator provider IDs in
+    // AUTHENTICATION_EXECUTION.AUTHENTICATOR,
     // which is limited to 36 characters.
     public static final String PROVIDER_ID = "hs-phone-username-password";
     private static final AuthenticationExecutionModel.Requirement[] REQUIREMENTS = {
@@ -34,7 +35,7 @@ public class PhoneUsernamePasswordFormFactory implements AuthenticatorFactory {
 
     @Override
     public String getDisplayType() {
-        return "HomeSpace Phone, Email or Username Password Form";
+        return "Telecare Phone, Email or Username Password Form";
     }
 
     @Override

@@ -27,7 +27,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   if (!initialized) {
     return (
       <LoadingScreen
-        title="HomeSpace Admin"
+        title="Telecare Admin"
         subtitle="Đang kiểm tra quyền quản trị hệ thống..."
       />
     );
@@ -42,7 +42,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   if (status === "loading" || status === "idle") {
     return (
       <LoadingScreen
-        title="HomeSpace Admin"
+        title="Telecare Admin"
         subtitle="Đang xác thực quyền hạn quản trị viên..."
       />
     );

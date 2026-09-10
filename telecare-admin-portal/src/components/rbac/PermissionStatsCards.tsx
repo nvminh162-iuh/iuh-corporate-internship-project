@@ -19,7 +19,8 @@ export default function PermissionStatsCards({
           Quyền hạn hệ thống
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
-          Quản lý danh mục quyền hạn (Permissions), định nghĩa phạm vi truy cập API và chức năng bảo mật RBAC trên toàn hệ thống HomeSpace.
+          Quản lý danh mục quyền hạn (Permissions), định nghĩa phạm vi truy cập
+          API và chức năng bảo mật RBAC trên toàn hệ thống Telecare.
         </p>
       </div>
 
@@ -27,7 +28,9 @@ export default function PermissionStatsCards({
       <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap lg:justify-end shrink-0">
         {/* Total Permissions */}
         <div className="bg-card px-3 py-1.5 rounded-xl border border-border flex items-baseline gap-2 shadow-2xs">
-          <span className="text-xs font-medium text-muted-foreground">Tổng quyền:</span>
+          <span className="text-xs font-medium text-muted-foreground">
+            Tổng quyền:
+          </span>
           <span className="text-sm sm:text-base font-extrabold text-foreground font-mono">
             {totalElements}
           </span>

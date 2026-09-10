@@ -19,7 +19,8 @@ export default function UserStatsCards({
           Người dùng hệ thống
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
-          Quản lý tài khoản người dùng, phân quyền vai trò (Role & Permission) và kiểm soát trạng thái hoạt động trên toàn hệ thống HomeSpace.
+          Quản lý tài khoản người dùng, phân quyền vai trò (Role & Permission)
+          và kiểm soát trạng thái hoạt động trên toàn hệ thống Telecare.
         </p>
       </div>
 
@@ -27,7 +28,9 @@ export default function UserStatsCards({
       <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap lg:justify-end shrink-0">
         {/* Total Users */}
         <div className="bg-card px-3 py-1.5 rounded-xl border border-border flex items-baseline gap-2 shadow-2xs">
-          <span className="text-xs font-medium text-muted-foreground">Tổng:</span>
+          <span className="text-xs font-medium text-muted-foreground">
+            Tổng:
+          </span>
           <span className="text-sm sm:text-base font-extrabold text-foreground font-mono">
             {totalElements}
           </span>
@@ -57,7 +60,9 @@ export default function UserStatsCards({
 
         {/* Onboarding Completed */}
         <div className="bg-card px-3 py-1.5 rounded-xl border border-border flex items-baseline gap-2 shadow-2xs">
-          <span className="text-xs font-medium text-muted-foreground">Onboarding:</span>
+          <span className="text-xs font-medium text-muted-foreground">
+            Onboarding:
+          </span>
           <span className="text-sm sm:text-base font-extrabold text-primary font-mono">
             {onboardedCount}
           </span>

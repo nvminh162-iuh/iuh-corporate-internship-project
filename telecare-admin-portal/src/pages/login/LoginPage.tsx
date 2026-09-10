@@ -8,7 +8,8 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as { from?: { pathname?: string } })?.from?.pathname;
+  const from = (location.state as { from?: { pathname?: string } })?.from
+    ?.pathname;
   const target = from && from !== "/" ? from : "/dashboard";
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export default function LoginPage() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Hệ thống quản trị và kiểm duyệt nền tảng HomeSpace
+            Hệ thống quản trị và kiểm duyệt nền tảng Telecare
           </p>
         </div>
 
@@ -38,7 +39,8 @@ export default function LoginPage() {
         <div className="p-3.5 rounded-2xl bg-muted/50 border border-border/80 text-xs text-muted-foreground flex items-center gap-2.5 text-left">
           <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
           <span>
-            Khu vực dành riêng cho Ban quản trị. Đăng nhập bảo mật qua Keycloak SSO.
+            Khu vực dành riêng cho Ban quản trị. Đăng nhập bảo mật qua Keycloak
+            SSO.
           </span>
         </div>
 
@@ -54,7 +56,7 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 text-center text-xs text-muted-foreground">
-        © 2026 HomeSpace. All rights reserved.
+        © 2026 Telecare. All rights reserved.
       </div>
     </div>
   );

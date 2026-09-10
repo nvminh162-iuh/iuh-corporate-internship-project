@@ -41,7 +41,7 @@ axiosClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${keycloak.token}`;
       }
     } catch (err) {
-      console.error("[HomeSpace] Request Interceptor Error:", err);
+      console.error("[Telecare] Request Interceptor Error:", err);
     }
     return config;
   },

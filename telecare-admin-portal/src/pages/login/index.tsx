@@ -12,7 +12,7 @@ export default function LoginPage() {
           <Shield className="h-7 w-7 text-teal-700" />
         </div>
 
-        <h1 className="text-xl font-bold text-slate-800">HomeSpace Admin</h1>
+        <h1 className="text-xl font-bold text-slate-800">Telecare Admin</h1>
         <p className="text-sm text-slate-500 mt-1 mb-6">
           Đăng nhập qua Keycloak SSO
         </p>
@@ -27,7 +27,7 @@ export default function LoginPage() {
         </Button>
 
         <p className="text-xs text-slate-400 mt-5">
-          Realm: homespace-platform · Client: homespace-id
+          Realm: Telecare-platform · Client: Telecare-id
         </p>
       </div>
     </div>
