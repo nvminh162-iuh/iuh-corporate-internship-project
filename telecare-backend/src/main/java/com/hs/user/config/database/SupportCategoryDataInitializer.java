@@ -34,6 +34,20 @@ public class SupportCategoryDataInitializer implements CommandLineRunner {
             log.warn("Could not create sequence support_request_ticket_seq: {}", e.getMessage());
         }
 
+        try {
+            jdbcTemplate.execute("ALTER TABLE support_requests DROP CONSTRAINT IF EXISTS support_requests_status_check");
+            jdbcTemplate.execute("ALTER TABLE support_requests ADD CONSTRAINT support_requests_status_check CHECK (status IN ('NEW', 'RECEIVED', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'COMPLETED', 'CLOSED'))");
+
+            jdbcTemplate.execute("ALTER TABLE support_request_histories DROP CONSTRAINT IF EXISTS support_request_histories_to_status_check");
+            jdbcTemplate.execute("ALTER TABLE support_request_histories ADD CONSTRAINT support_request_histories_to_status_check CHECK (to_status IS NULL OR to_status IN ('NEW', 'RECEIVED', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'COMPLETED', 'CLOSED'))");
+
+            jdbcTemplate.execute("ALTER TABLE support_request_histories DROP CONSTRAINT IF EXISTS support_request_histories_from_status_check");
+            jdbcTemplate.execute("ALTER TABLE support_request_histories ADD CONSTRAINT support_request_histories_from_status_check CHECK (from_status IS NULL OR from_status IN ('NEW', 'RECEIVED', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'COMPLETED', 'CLOSED'))");
+            log.info("Support request status check constraints verified and updated.");
+        } catch (Exception e) {
+            log.warn("Could not update support request status check constraints: {}", e.getMessage());
+        }
+
         seedCategory("PACKAGE", "Gói cước", "Các vấn đề liên quan đến đăng ký, gia hạn và hủy gói cước", 1);
         seedCategory("SERVICE", "Dịch vụ", "Hỗ trợ tư vấn và hướng dẫn sử dụng dịch vụ TeleCare", 2);
         seedCategory("CONNECTION", "Kết nối", "Sự cố kết nối mạng, sóng yếu hoặc không thể kết nối", 3);
