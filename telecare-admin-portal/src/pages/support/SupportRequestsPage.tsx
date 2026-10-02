@@ -18,10 +18,12 @@ import {
   getAdminSupportRequests,
   getSupportCategories,
   receiveSupportRequest,
+  getEligibleAssignees,
 } from "@/services/support-admin.service";
 import { getAdminUsers } from "@/services/admin-user.service";
 import type {
   SupportRequestAdminSummary,
+  SupportRequestAssignee,
   SupportRequestStatus,
   UserSummaryInfo,
 } from "@/types/support-admin.type";
@@ -69,7 +71,10 @@ const STATUS_CONFIG: Record<
   },
 };
 
-function getUserDisplayName(user?: UserSummaryInfo | AdminUser | null, fallback?: string): string {
+function getUserDisplayName(
+  user?: UserSummaryInfo | AdminUser | SupportRequestAssignee | null,
+  fallback?: string
+): string {
   if (!user) return fallback || "N/A";
   if ("fullName" in user && user.fullName) return user.fullName;
   const name = [user.lastName, user.firstName].filter(Boolean).join(" ");
@@ -87,10 +92,11 @@ export default function SupportRequestsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Options for Dropdowns
   const [categories, setCategories] = useState<{ code: string; name: string }[]>([]);
-  const [staffUsers, setStaffUsers] = useState<AdminUser[]>([]);
+  const [staffUsers, setStaffUsers] = useState<(AdminUser | SupportRequestAssignee)[]>([]);
 
   // Filters
   const [keyword, setKeyword] = useState("");
@@ -106,12 +112,16 @@ export default function SupportRequestsPage() {
   // Fetch Options
   const fetchOptions = useCallback(async () => {
     try {
-      const [cats, usersRes] = await Promise.all([
+      const [cats, staffList] = await Promise.all([
         getSupportCategories().catch(() => []),
-        getAdminUsers(1, 100).catch(() => ({ result: [] })),
+        getEligibleAssignees().catch(() =>
+          getAdminUsers(1, 100)
+            .then((res) => res.result || [])
+            .catch(() => [])
+        ),
       ]);
       setCategories(cats);
-      setStaffUsers(usersRes.result || []);
+      setStaffUsers(staffList);
     } catch {
       // Ignore fallback
     }
@@ -119,7 +129,13 @@ export default function SupportRequestsPage() {
 
   // Fetch Tickets
   const fetchTickets = useCallback(async () => {
+    if (fromDate && toDate && fromDate > toDate) {
+      toast.error("Khoảng thời gian không hợp lệ: Từ ngày không được sau Đến ngày!");
+      return;
+    }
+
     setLoading(true);
+    setFetchError(null);
     try {
       const data = await getAdminSupportRequests({
         page,
@@ -134,19 +150,27 @@ export default function SupportRequestsPage() {
       setTickets(data.result || []);
       setTotalPages(data.totalPages || 1);
       setTotalElements(data.totalElements || 0);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to fetch support requests:", error);
-      toast.error("Không thể tải danh sách yêu cầu hỗ trợ!");
+      const msg =
+        typeof error === "object" && error !== null && "response" in error
+          ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            "Không thể tải danh sách yêu cầu hỗ trợ!")
+          : "Không thể tải danh sách yêu cầu hỗ trợ!";
+      setFetchError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   }, [page, size, keyword, status, categoryCode, assignedTo, fromDate, toDate]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOptions();
   }, [fetchOptions]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTickets();
   }, [fetchTickets]);
 
@@ -158,8 +182,13 @@ export default function SupportRequestsPage() {
       await receiveSupportRequest(id);
       toast.success(`Đã tiếp nhận ticket ${code} thành công!`);
       fetchTickets();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Không thể tiếp nhận ticket!");
+    } catch (err: unknown) {
+      const msg =
+        typeof err === "object" && err !== null && "response" in err
+          ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            "Không thể tiếp nhận ticket!")
+          : "Không thể tiếp nhận ticket!";
+      toast.error(msg);
     } finally {
       setReceivingId(null);
     }
@@ -295,6 +324,11 @@ export default function SupportRequestsPage() {
             }}
             className="px-2.5 py-1 bg-background border border-border rounded-md text-foreground text-xs"
           />
+          {fromDate && toDate && fromDate > toDate && (
+            <span className="text-red-500 font-medium">
+              Từ ngày không được sau Đến ngày
+            </span>
+          )}
           {(keyword || status || categoryCode || assignedTo || fromDate || toDate) && (
             <Button
               variant="ghost"
@@ -341,6 +375,18 @@ export default function SupportRequestsPage() {
                     </td>
                   </tr>
                 ))
+              ) : fetchError ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <p className="font-semibold text-base text-red-500">{fetchError}</p>
+                      <Button variant="outline" size="sm" onClick={() => fetchTickets()}>
+                        <RefreshCw className="w-4 h-4 mr-1.5" />
+                        Thử lại
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
               ) : tickets.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">

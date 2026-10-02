@@ -1,6 +1,7 @@
 package com.hs.user.repository.specification;
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,11 +9,12 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.hs.user.dto.request.SupportRequestAdminQuery;
 import com.hs.user.model.SupportRequest;
-import com.hs.user.model.constant.SupportRequestStatus;
 
 import jakarta.persistence.criteria.Predicate;
 
 public class SupportRequestSpecification {
+
+    public static final ZoneId BUSINESS_ZONE_ID = ZoneId.of("Asia/Bangkok");
 
     private SupportRequestSpecification() {
     }
@@ -21,15 +23,20 @@ public class SupportRequestSpecification {
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            if (query == null) {
+                return criteriaBuilder.conjunction();
+            }
+
             if (query.getKeyword() != null && !query.getKeyword().isBlank()) {
                 String pattern = "%" + query.getKeyword().trim().toLowerCase() + "%";
                 Predicate ticketCodeMatch = criteriaBuilder.like(criteriaBuilder.lower(root.get("ticketCode")), pattern);
                 Predicate subjectMatch = criteriaBuilder.like(criteriaBuilder.lower(root.get("subject")), pattern);
+                Predicate contentMatch = criteriaBuilder.like(criteriaBuilder.lower(root.get("content")), pattern);
                 Predicate phoneMatch = criteriaBuilder.like(criteriaBuilder.lower(root.get("contactPhone")), pattern);
                 Predicate emailMatch = criteriaBuilder.like(criteriaBuilder.lower(root.get("contactEmail")), pattern);
                 Predicate customerMatch = criteriaBuilder.like(criteriaBuilder.lower(root.get("customerId")), pattern);
 
-                predicates.add(criteriaBuilder.or(ticketCodeMatch, subjectMatch, phoneMatch, emailMatch, customerMatch));
+                predicates.add(criteriaBuilder.or(ticketCodeMatch, subjectMatch, contentMatch, phoneMatch, emailMatch, customerMatch));
             }
 
             if (query.getStatus() != null) {
@@ -45,11 +52,13 @@ public class SupportRequestSpecification {
             }
 
             if (query.getFromDate() != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), query.getFromDate()));
+                Instant fromInstant = query.getFromDate().atStartOfDay(BUSINESS_ZONE_ID).toInstant();
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), fromInstant));
             }
 
             if (query.getToDate() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"), query.getToDate()));
+                Instant toInstant = query.getToDate().plusDays(1).atStartOfDay(BUSINESS_ZONE_ID).toInstant();
+                predicates.add(criteriaBuilder.lessThan(root.get("createdAt"), toInstant));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

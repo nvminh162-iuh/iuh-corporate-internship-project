@@ -28,5 +28,8 @@ public final class PermissionConstants {
         public static final String CATEGORY_CREATE = "CATEGORY_CREATE";
         public static final String CATEGORY_UPDATE = "CATEGORY_UPDATE";
         public static final String CATEGORY_DELETE = "CATEGORY_DELETE";
+        public static final String SUPPORT_REQUEST_VIEW = "SUPPORT_REQUEST_VIEW";
+        public static final String SUPPORT_REQUEST_PROCESS = "SUPPORT_REQUEST_PROCESS";
+        public static final String SUPPORT_REQUEST_ASSIGN = "SUPPORT_REQUEST_ASSIGN";
     }
 }

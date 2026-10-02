@@ -9,6 +9,7 @@ import com.hs.user.dto.request.AddSupportRequestHistoryRequest;
 import com.hs.user.dto.request.AssignSupportRequestRequest;
 import com.hs.user.dto.request.SupportRequestAdminQuery;
 import com.hs.user.dto.request.UpdateSupportRequestStatusRequest;
+import com.hs.user.dto.response.SupportRequestAdminAssigneeResponse;
 import com.hs.user.dto.response.SupportRequestAdminDetailResponse;
 import com.hs.user.dto.response.SupportRequestAdminSummaryResponse;
 import com.hs.user.dto.response.SupportRequestHistoryResponse;
@@ -28,4 +29,6 @@ public interface SupportRequestAdminService {
     SupportRequestHistoryResponse addSupportRequestHistoryNote(String id, AddSupportRequestHistoryRequest request, String actorId);
 
     List<SupportRequestHistoryResponse> findSupportRequestHistories(String id);
+
+    List<SupportRequestAdminAssigneeResponse> findEligibleAssignees(String keyword);
 }

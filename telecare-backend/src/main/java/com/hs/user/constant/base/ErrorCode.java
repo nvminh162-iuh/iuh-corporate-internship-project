@@ -70,6 +70,9 @@ public enum ErrorCode {
     SUPPORT_REQUEST_NOTE_REQUIRED(1605, "Note or resolution details required for this status change", HttpStatus.BAD_REQUEST),
     TICKET_MUST_BE_RECEIVED_FIRST(1606, "Ticket must be received before processing or assigning", HttpStatus.BAD_REQUEST),
     STAFF_NOT_FOUND(1607, "Assigned staff user does not exist", HttpStatus.NOT_FOUND),
+    STAFF_NOT_ELIGIBLE(1608, "Assigned user is not an active staff member", HttpStatus.BAD_REQUEST),
+    INVALID_DATE_RANGE(1609, "From date cannot be after to date", HttpStatus.BAD_REQUEST),
+    RESOLUTION_REQUIRED(1610, "Resolution details are required when completing a ticket", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

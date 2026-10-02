@@ -6,6 +6,7 @@ import type {
   SupportRequestAdminDetail,
   SupportRequestAdminQuery,
   SupportRequestAdminSummary,
+  SupportRequestAssignee,
   SupportRequestHistory,
   UpdateSupportRequestStatusPayload,
 } from "@/types/support-admin.type";
@@ -114,6 +115,18 @@ export async function getSupportRequestHistories(
 export async function getSupportCategories(): Promise<{ code: string; name: string }[]> {
   const { data } = await axiosClient.get<ApiResponse<{ code: string; name: string }[]>>(
     "/api/v1/support-categories",
+  );
+  return data.result;
+}
+
+export async function getEligibleAssignees(keyword?: string): Promise<SupportRequestAssignee[]> {
+  const params: Record<string, string> = {};
+  if (keyword?.trim()) {
+    params.keyword = keyword.trim();
+  }
+  const { data } = await axiosClient.get<ApiResponse<SupportRequestAssignee[]>>(
+    "/api/v1/admin/support-requests/assignees",
+    { params },
   );
   return data.result;
 }

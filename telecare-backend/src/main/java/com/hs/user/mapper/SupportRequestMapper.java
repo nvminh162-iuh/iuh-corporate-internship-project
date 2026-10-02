@@ -125,4 +125,26 @@ public class SupportRequestMapper {
                 .createdAt(history.getCreatedAt())
                 .build();
     }
+
+    public static com.hs.user.dto.response.SupportRequestAdminAssigneeResponse mapToAdminAssigneeResponse(com.hs.user.model.User user) {
+        if (user == null) {
+            return null;
+        }
+        String firstName = user.getFirstName() != null ? user.getFirstName().trim() : "";
+        String lastName = user.getLastName() != null ? user.getLastName().trim() : "";
+        String fullName = (firstName + " " + lastName).trim();
+        if (fullName.isBlank()) {
+            fullName = user.getUsername();
+        }
+
+        return com.hs.user.dto.response.SupportRequestAdminAssigneeResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .fullName(fullName)
+                .email(user.getEmail())
+                .roleName(user.getRole() != null ? user.getRole().getName() : null)
+                .build();
+    }
 }

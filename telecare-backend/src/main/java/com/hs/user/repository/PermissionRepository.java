@@ -4,7 +4,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.hs.user.model.Permission;
 
+import java.util.Optional;
+
 public interface PermissionRepository extends JpaRepository<Permission, String> {
+    Optional<Permission> findByName(String name);
+
     boolean existsByName(String name);
 
     boolean existsByNameAndIdNot(String name, String id);

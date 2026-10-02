@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,6 +29,7 @@ import com.hs.user.dto.request.AddSupportRequestHistoryRequest;
 import com.hs.user.dto.request.AssignSupportRequestRequest;
 import com.hs.user.dto.request.SupportRequestAdminQuery;
 import com.hs.user.dto.request.UpdateSupportRequestStatusRequest;
+import com.hs.user.dto.response.SupportRequestAdminAssigneeResponse;
 import com.hs.user.dto.response.SupportRequestAdminDetailResponse;
 import com.hs.user.dto.response.SupportRequestAdminSummaryResponse;
 import com.hs.user.dto.response.SupportRequestHistoryResponse;
@@ -43,11 +45,13 @@ import lombok.experimental.FieldDefaults;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequestMapping("/admin/support-requests")
+@PreAuthorize("hasAnyAuthority('ADMIN', 'SUPPORT_REQUEST_VIEW', 'SUPPORT_REQUEST_PROCESS', 'SUPPORT_REQUEST_ASSIGN')")
 public class SupportRequestAdminController {
 
     SupportRequestAdminService supportRequestAdminService;
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPPORT_REQUEST_VIEW')")
     public ApiResponse<PageResponse<SupportRequestAdminSummaryResponse>> findAllAdminSupportRequests(
             @ModelAttribute SupportRequestAdminQuery query,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
@@ -61,6 +65,7 @@ public class SupportRequestAdminController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPPORT_REQUEST_VIEW')")
     public ApiResponse<SupportRequestAdminDetailResponse> findAdminSupportRequestById(@PathVariable String id) {
         return ApiResponse.<SupportRequestAdminDetailResponse>builder()
                 .result(supportRequestAdminService.findAdminSupportRequestById(id))
@@ -68,6 +73,7 @@ public class SupportRequestAdminController {
     }
 
     @PatchMapping("/{id}/receive")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPPORT_REQUEST_PROCESS')")
     public ApiResponse<SupportRequestAdminDetailResponse> receiveSupportRequest(@PathVariable String id) {
         String actorId = resolveActorId();
         return ApiResponse.<SupportRequestAdminDetailResponse>builder()
@@ -77,6 +83,7 @@ public class SupportRequestAdminController {
     }
 
     @PatchMapping("/{id}/assign")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPPORT_REQUEST_ASSIGN')")
     public ApiResponse<SupportRequestAdminDetailResponse> assignSupportRequest(
             @PathVariable String id,
             @RequestBody @Valid AssignSupportRequestRequest request
@@ -89,6 +96,7 @@ public class SupportRequestAdminController {
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPPORT_REQUEST_PROCESS')")
     public ApiResponse<SupportRequestAdminDetailResponse> updateSupportRequestStatus(
             @PathVariable String id,
             @RequestBody @Valid UpdateSupportRequestStatusRequest request
@@ -102,6 +110,7 @@ public class SupportRequestAdminController {
 
     @PostMapping("/{id}/histories")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPPORT_REQUEST_PROCESS')")
     public ApiResponse<SupportRequestHistoryResponse> addSupportRequestHistoryNote(
             @PathVariable String id,
             @RequestBody @Valid AddSupportRequestHistoryRequest request
@@ -114,9 +123,20 @@ public class SupportRequestAdminController {
     }
 
     @GetMapping("/{id}/histories")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPPORT_REQUEST_VIEW')")
     public ApiResponse<List<SupportRequestHistoryResponse>> findSupportRequestHistories(@PathVariable String id) {
         return ApiResponse.<List<SupportRequestHistoryResponse>>builder()
                 .result(supportRequestAdminService.findSupportRequestHistories(id))
+                .build();
+    }
+
+    @GetMapping("/assignees")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPPORT_REQUEST_ASSIGN')")
+    public ApiResponse<List<SupportRequestAdminAssigneeResponse>> findEligibleAssignees(
+            @RequestParam(required = false) String keyword
+    ) {
+        return ApiResponse.<List<SupportRequestAdminAssigneeResponse>>builder()
+                .result(supportRequestAdminService.findEligibleAssignees(keyword))
                 .build();
     }
 

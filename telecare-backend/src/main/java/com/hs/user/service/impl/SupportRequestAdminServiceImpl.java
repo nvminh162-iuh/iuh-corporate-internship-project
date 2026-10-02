@@ -1,25 +1,34 @@
 package com.hs.user.service.impl;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hs.user.advice.base.AppException;
+import com.hs.user.constant.PermissionConstants;
+import com.hs.user.constant.RoleConstants;
 import com.hs.user.constant.base.ErrorCode;
 import com.hs.user.dto.request.AddSupportRequestHistoryRequest;
 import com.hs.user.dto.request.AssignSupportRequestRequest;
 import com.hs.user.dto.request.SupportRequestAdminQuery;
 import com.hs.user.dto.request.UpdateSupportRequestStatusRequest;
+import com.hs.user.dto.response.SupportRequestAdminAssigneeResponse;
 import com.hs.user.dto.response.SupportRequestAdminDetailResponse;
 import com.hs.user.dto.response.SupportRequestAdminSummaryResponse;
 import com.hs.user.dto.response.SupportRequestHistoryResponse;
 import com.hs.user.dto.response.UserResponse;
 import com.hs.user.mapper.SupportRequestMapper;
 import com.hs.user.mapper.UserMapper;
+import com.hs.user.model.Role;
 import com.hs.user.model.SupportRequest;
 import com.hs.user.model.SupportRequestHistory;
 import com.hs.user.model.User;
@@ -42,6 +51,28 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SupportRequestAdminServiceImpl implements SupportRequestAdminService {
 
+    private static final Map<SupportRequestStatus, Set<SupportRequestStatus>> ALLOWED_TRANSITIONS = Map.of(
+            SupportRequestStatus.NEW, Set.of(SupportRequestStatus.RECEIVED),
+            SupportRequestStatus.RECEIVED, Set.of(SupportRequestStatus.IN_PROGRESS),
+            SupportRequestStatus.IN_PROGRESS, Set.of(SupportRequestStatus.WAITING_CUSTOMER, SupportRequestStatus.COMPLETED),
+            SupportRequestStatus.WAITING_CUSTOMER, Set.of(SupportRequestStatus.IN_PROGRESS, SupportRequestStatus.COMPLETED),
+            SupportRequestStatus.COMPLETED, Set.of(SupportRequestStatus.CLOSED),
+            SupportRequestStatus.CLOSED, Collections.emptySet()
+    );
+
+    private static final Set<SupportRequestStatus> ALLOWED_ASSIGN_STATUSES = Set.of(
+            SupportRequestStatus.RECEIVED,
+            SupportRequestStatus.IN_PROGRESS,
+            SupportRequestStatus.WAITING_CUSTOMER
+    );
+
+    private static final Set<SupportRequestStatus> ALLOWED_NOTE_STATUSES = Set.of(
+            SupportRequestStatus.RECEIVED,
+            SupportRequestStatus.IN_PROGRESS,
+            SupportRequestStatus.WAITING_CUSTOMER,
+            SupportRequestStatus.COMPLETED
+    );
+
     SupportRequestRepository supportRequestRepository;
     SupportRequestHistoryRepository supportRequestHistoryRepository;
     UserRepository userRepository;
@@ -49,9 +80,19 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
     @Override
     @Transactional(readOnly = true)
     public Page<SupportRequestAdminSummaryResponse> findAllAdminSupportRequests(SupportRequestAdminQuery query, Pageable pageable) {
+        if (query != null && query.getFromDate() != null && query.getToDate() != null
+                && query.getFromDate().isAfter(query.getToDate())) {
+            throw new AppException(ErrorCode.INVALID_DATE_RANGE);
+        }
+
+        int pageSize = Math.min(Math.max(pageable.getPageSize(), 1), 100);
+        int pageNumber = Math.max(pageable.getPageNumber(), 0);
+        Sort sort = pageable.getSort().and(Sort.by(Sort.Direction.DESC, "id"));
+        Pageable safePageable = PageRequest.of(pageNumber, pageSize, sort);
+
         Page<SupportRequest> requestsPage = supportRequestRepository.findAll(
                 SupportRequestSpecification.filterAdminRequests(query),
-                pageable
+                safePageable
         );
 
         return requestsPage.map(req -> {
@@ -109,8 +150,11 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
             throw new AppException(ErrorCode.TICKET_MUST_BE_RECEIVED_FIRST);
         }
 
-        User staff = userRepository.findById(request.getAssignedTo())
-                .orElseThrow(() -> new AppException(ErrorCode.STAFF_NOT_FOUND));
+        if (!ALLOWED_ASSIGN_STATUSES.contains(req.getStatus())) {
+            throw new AppException(ErrorCode.INVALID_SUPPORT_REQUEST_STATUS);
+        }
+
+        User staff = validateStaffEligibility(request.getAssignedTo());
 
         SupportRequestStatus oldStatus = req.getStatus();
         SupportRequestStatus newStatus = oldStatus;
@@ -126,9 +170,14 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
 
         SupportRequest saved = supportRequestRepository.save(req);
 
+        String staffDisplay = staff.getUsername() != null ? staff.getUsername() : staff.getId();
+        String defaultNote = (oldStatus == SupportRequestStatus.RECEIVED)
+                ? "Phân công xử lý sự cố cho nhân viên: " + staffDisplay
+                : "Phân công lại sự cố cho nhân viên: " + staffDisplay;
+
         String note = (request.getNote() != null && !request.getNote().isBlank())
                 ? request.getNote().trim()
-                : "Phân công xử lý cho nhân viên: " + staff.getUsername();
+                : defaultNote;
 
         createHistoryEntry(saved, oldStatus, newStatus, SupportRequestHistoryAction.ASSIGNED, note, actorId);
 
@@ -152,26 +201,30 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
             return findAdminSupportRequestById(id);
         }
 
-        // Must be received before transitioning to IN_PROGRESS, WAITING_CUSTOMER, COMPLETED
-        if (oldStatus == SupportRequestStatus.NEW && targetStatus != SupportRequestStatus.RECEIVED) {
-            throw new AppException(ErrorCode.TICKET_MUST_BE_RECEIVED_FIRST);
+        // Validate transition against centralized state matrix
+        Set<SupportRequestStatus> allowed = ALLOWED_TRANSITIONS.getOrDefault(oldStatus, Collections.emptySet());
+        if (!allowed.contains(targetStatus)) {
+            if (oldStatus == SupportRequestStatus.NEW) {
+                throw new AppException(ErrorCode.TICKET_MUST_BE_RECEIVED_FIRST);
+            }
+            throw new AppException(ErrorCode.INVALID_SUPPORT_REQUEST_STATUS);
         }
 
         String note = request.getNote() != null ? request.getNote().trim() : "";
 
-        // Require note for WAITING_CUSTOMER and COMPLETED
-        if ((targetStatus == SupportRequestStatus.WAITING_CUSTOMER || targetStatus == SupportRequestStatus.COMPLETED) && note.isBlank()) {
+        // Require note for WAITING_CUSTOMER
+        if (targetStatus == SupportRequestStatus.WAITING_CUSTOMER && note.isBlank()) {
             throw new AppException(ErrorCode.SUPPORT_REQUEST_NOTE_REQUIRED);
         }
 
-        // Set milestone timestamps & resolution
+        // Require non-empty resolution for COMPLETED
         if (targetStatus == SupportRequestStatus.COMPLETED) {
-            req.setCompletedAt(Instant.now());
-            if (request.getResolution() != null && !request.getResolution().isBlank()) {
-                req.setResolution(request.getResolution().trim());
-            } else {
-                req.setResolution(note);
+            String resolution = request.getResolution() != null ? request.getResolution().trim() : "";
+            if (resolution.isBlank()) {
+                throw new AppException(ErrorCode.RESOLUTION_REQUIRED);
             }
+            req.setResolution(resolution);
+            req.setCompletedAt(Instant.now());
         } else if (targetStatus == SupportRequestStatus.CLOSED) {
             req.setClosedAt(Instant.now());
         }
@@ -194,12 +247,21 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
             throw new AppException(ErrorCode.CLOSED_TICKET_CANNOT_BE_UPDATED);
         }
 
+        if (!ALLOWED_NOTE_STATUSES.contains(req.getStatus())) {
+            throw new AppException(ErrorCode.INVALID_SUPPORT_REQUEST_STATUS);
+        }
+
+        String note = request.getNote() != null ? request.getNote().trim() : "";
+        if (note.isBlank()) {
+            throw new AppException(ErrorCode.SUPPORT_REQUEST_NOTE_REQUIRED);
+        }
+
         SupportRequestHistory history = createHistoryEntry(
                 req,
                 req.getStatus(),
                 req.getStatus(),
                 SupportRequestHistoryAction.NOTE_ADDED,
-                request.getNote().trim(),
+                note,
                 actorId
         );
 
@@ -219,6 +281,42 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
             UserResponse actor = resolveUser(h.getActorId());
             return SupportRequestMapper.mapToHistoryResponse(h, actor);
         }).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SupportRequestAdminAssigneeResponse> findEligibleAssignees(String keyword) {
+        List<User> staffList = userRepository.findEligibleSupportAssignees(keyword);
+        return staffList.stream()
+                .map(SupportRequestMapper::mapToAdminAssigneeResponse)
+                .toList();
+    }
+
+    private User validateStaffEligibility(String staffId) {
+        User staff = userRepository.findByIdWithRoleAndPermissions(staffId)
+                .orElseThrow(() -> new AppException(ErrorCode.STAFF_NOT_FOUND));
+
+        if (!Boolean.TRUE.equals(staff.getActive())) {
+            throw new AppException(ErrorCode.STAFF_NOT_ELIGIBLE);
+        }
+
+        Role role = staff.getRole();
+        if (role == null || !Boolean.TRUE.equals(role.getActive())) {
+            throw new AppException(ErrorCode.STAFF_NOT_ELIGIBLE);
+        }
+
+        boolean isAdmin = RoleConstants.ADMIN.equalsIgnoreCase(role.getName())
+                || "ROLE_ADMIN".equalsIgnoreCase(role.getName());
+
+        boolean hasProcessPermission = role.getPermissions() != null && role.getPermissions().stream()
+                .anyMatch(p -> Boolean.TRUE.equals(p.getActive())
+                        && PermissionConstants.Admin.SUPPORT_REQUEST_PROCESS.equals(p.getName()));
+
+        if (!isAdmin && !hasProcessPermission) {
+            throw new AppException(ErrorCode.STAFF_NOT_ELIGIBLE);
+        }
+
+        return staff;
     }
 
     private SupportRequest findEntityById(String id) {
@@ -242,7 +340,6 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
                 .note(note)
                 .actorId(actorId)
                 .build();
-        history.setActive(true);
 
         return supportRequestHistoryRepository.save(history);
     }
@@ -253,6 +350,6 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
         }
         return userRepository.findById(userId)
                 .map(UserMapper::mapToUserResponse)
-                .orElse(UserResponse.builder().id(userId).username(userId).build());
+                .orElse(null);
     }
 }

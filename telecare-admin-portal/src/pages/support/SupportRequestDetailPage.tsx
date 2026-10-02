@@ -25,14 +25,14 @@ import {
   assignSupportRequest,
   updateSupportRequestStatus,
   addSupportRequestHistory,
+  getEligibleAssignees,
 } from "@/services/support-admin.service";
-import { getAdminUsers } from "@/services/admin-user.service";
 import type {
   SupportRequestAdminDetail,
+  SupportRequestAssignee,
   SupportRequestStatus,
   UserSummaryInfo,
 } from "@/types/support-admin.type";
-import type { AdminUser } from "@/types/user.type";
 
 const STATUS_CONFIG: Record<
   SupportRequestStatus,
@@ -76,7 +76,19 @@ const STATUS_CONFIG: Record<
   },
 };
 
-function getUserDisplayName(user?: UserSummaryInfo | AdminUser | null, fallback?: string): string {
+const ALLOWED_TARGET_STATUSES: Record<SupportRequestStatus, SupportRequestStatus[]> = {
+  NEW: [],
+  RECEIVED: ["IN_PROGRESS"],
+  IN_PROGRESS: ["WAITING_CUSTOMER", "COMPLETED"],
+  WAITING_CUSTOMER: ["IN_PROGRESS", "COMPLETED"],
+  COMPLETED: ["CLOSED"],
+  CLOSED: [],
+};
+
+function getUserDisplayName(
+  user?: UserSummaryInfo | SupportRequestAssignee | null,
+  fallback?: string
+): string {
   if (!user) return fallback || "N/A";
   if ("fullName" in user && user.fullName) return user.fullName;
   const name = [user.lastName, user.firstName].filter(Boolean).join(" ");
@@ -90,7 +102,9 @@ export default function SupportRequestDetailPage() {
 
   const [ticket, setTicket] = useState<SupportRequestAdminDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [staffUsers, setStaffUsers] = useState<AdminUser[]>([]);
+  const [staffUsers, setStaffUsers] = useState<SupportRequestAssignee[]>([]);
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [staffError, setStaffError] = useState<string | null>(null);
 
   // Action Loading
   const [actionLoading, setActionLoading] = useState(false);
@@ -123,15 +137,26 @@ export default function SupportRequestDetailPage() {
   }, [id]);
 
   const fetchStaff = useCallback(async () => {
+    setStaffLoading(true);
+    setStaffError(null);
     try {
-      const res = await getAdminUsers(1, 100);
-      setStaffUsers(res.result || []);
-    } catch {
-      // Fallback
+      const assignees = await getEligibleAssignees();
+      setStaffUsers(assignees);
+    } catch (err: unknown) {
+      const msg =
+        typeof err === "object" && err !== null && "response" in err
+          ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            "Không thể tải danh sách nhân viên hỗ trợ!")
+          : "Không thể tải danh sách nhân viên hỗ trợ!";
+      setStaffError(msg);
+      toast.error(msg);
+    } finally {
+      setStaffLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDetail();
     fetchStaff();
   }, [fetchDetail, fetchStaff]);
@@ -168,11 +193,16 @@ export default function SupportRequestDetailPage() {
     if (!ticket) return;
     setActionLoading(true);
     try {
-      const updated = await receiveSupportRequest(ticket.id);
-      setTicket(updated);
+      await receiveSupportRequest(ticket.id);
       toast.success("Đã tiếp nhận ticket thành công!");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Không thể tiếp nhận ticket!");
+      await fetchDetail();
+    } catch (err: unknown) {
+      const msg =
+        typeof err === "object" && err !== null && "response" in err
+          ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            "Không thể tiếp nhận ticket!")
+          : "Không thể tiếp nhận ticket!";
+      toast.error(msg);
     } finally {
       setActionLoading(false);
     }
@@ -186,16 +216,21 @@ export default function SupportRequestDetailPage() {
     }
     setActionLoading(true);
     try {
-      const updated = await assignSupportRequest(ticket.id, {
+      await assignSupportRequest(ticket.id, {
         assignedTo: assignStaffId,
-        note: assignNote,
+        note: assignNote.trim() || undefined,
       });
-      setTicket(updated);
       toast.success("Phân công nhân viên thành công!");
       setIsAssignModalOpen(false);
       setAssignNote("");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Phân công thất bại!");
+      await fetchDetail();
+    } catch (err: unknown) {
+      const msg =
+        typeof err === "object" && err !== null && "response" in err
+          ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            "Phân công thất bại!")
+          : "Phân công thất bại!";
+      toast.error(msg);
     } finally {
       setActionLoading(false);
     }
@@ -203,28 +238,34 @@ export default function SupportRequestDetailPage() {
 
   const handleStatusSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      (targetStatus === "WAITING_CUSTOMER" || targetStatus === "COMPLETED") &&
-      !statusNote.trim()
-    ) {
-      toast.error(`Vui lòng nhập nội dung ghi chú khi chuyển sang trạng thái ${targetStatus}!`);
+    if (targetStatus === "WAITING_CUSTOMER" && !statusNote.trim()) {
+      toast.error("Vui lòng nhập lý do / nội dung yêu cầu khách hàng bổ sung!");
+      return;
+    }
+    if (targetStatus === "COMPLETED" && !resolutionText.trim()) {
+      toast.error("Vui lòng nhập kết quả xử lý (Resolution) khi hoàn tất ticket!");
       return;
     }
 
     setActionLoading(true);
     try {
-      const updated = await updateSupportRequestStatus(ticket.id, {
+      await updateSupportRequestStatus(ticket.id, {
         status: targetStatus,
-        note: statusNote,
-        resolution: targetStatus === "COMPLETED" ? resolutionText : undefined,
+        note: statusNote.trim() || undefined,
+        resolution: targetStatus === "COMPLETED" ? resolutionText.trim() : undefined,
       });
-      setTicket(updated);
-      toast.success(`Đã chuyển trạng thái sang ${targetStatus}!`);
+      toast.success(`Đã chuyển trạng thái sang ${STATUS_CONFIG[targetStatus]?.label || targetStatus}!`);
       setIsStatusModalOpen(false);
       setStatusNote("");
       setResolutionText("");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Cập nhật trạng thái thất bại!");
+      await fetchDetail();
+    } catch (err: unknown) {
+      const msg =
+        typeof err === "object" && err !== null && "response" in err
+          ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            "Cập nhật trạng thái thất bại!")
+          : "Cập nhật trạng thái thất bại!";
+      toast.error(msg);
     } finally {
       setActionLoading(false);
     }
@@ -238,13 +279,18 @@ export default function SupportRequestDetailPage() {
     }
     setActionLoading(true);
     try {
-      await addSupportRequestHistory(ticket.id, { note: historyNote });
+      await addSupportRequestHistory(ticket.id, { note: historyNote.trim() });
       toast.success("Đã thêm nội dung xử lý vào lịch sử!");
       setIsHistoryModalOpen(false);
       setHistoryNote("");
-      fetchDetail();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Thêm ghi chú thất bại!");
+      await fetchDetail();
+    } catch (err: unknown) {
+      const msg =
+        typeof err === "object" && err !== null && "response" in err
+          ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            "Thêm ghi chú thất bại!")
+          : "Thêm ghi chú thất bại!";
+      toast.error(msg);
     } finally {
       setActionLoading(false);
     }
@@ -281,6 +327,7 @@ export default function SupportRequestDetailPage() {
         {/* Action Buttons */}
         {!isClosed && (
           <div className="flex flex-wrap items-center gap-2">
+            {/* NEW: Chỉ tiếp nhận */}
             {ticket.status === "NEW" && (
               <Button
                 variant="outline"
@@ -294,47 +341,60 @@ export default function SupportRequestDetailPage() {
               </Button>
             )}
 
-            {ticket.status !== "NEW" && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setAssignStaffId(ticket.assignedToId || ticket.assignedTo?.id || "");
-                    setIsAssignModalOpen(true);
-                  }}
-                  disabled={actionLoading}
-                  className="gap-1.5"
-                >
-                  <UserCheck className="w-4 h-4" />
-                  Phân công
-                </Button>
+            {/* Phân công: RECEIVED, IN_PROGRESS, WAITING_CUSTOMER */}
+            {(ticket.status === "RECEIVED" ||
+              ticket.status === "IN_PROGRESS" ||
+              ticket.status === "WAITING_CUSTOMER") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setAssignStaffId(ticket.assignedToId || ticket.assignedTo?.id || "");
+                  setIsAssignModalOpen(true);
+                }}
+                disabled={actionLoading}
+                className="gap-1.5"
+              >
+                <UserCheck className="w-4 h-4" />
+                {ticket.assignedTo || ticket.assignedToName ? "Phân công lại" : "Phân công"}
+              </Button>
+            )}
 
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => {
-                    setTargetStatus(ticket.status);
+            {/* Cập nhật trạng thái theo ma trận */}
+            {ALLOWED_TARGET_STATUSES[ticket.status]?.length > 0 && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  const allowed = ALLOWED_TARGET_STATUSES[ticket.status];
+                  if (allowed && allowed.length > 0) {
+                    setTargetStatus(allowed[0]);
                     setIsStatusModalOpen(true);
-                  }}
-                  disabled={actionLoading}
-                  className="gap-1.5"
-                >
-                  <Send className="w-4 h-4" />
-                  Cập nhật trạng thái
-                </Button>
+                  }
+                }}
+                disabled={actionLoading}
+                className="gap-1.5"
+              >
+                <Send className="w-4 h-4" />
+                {ticket.status === "COMPLETED" ? "Đóng Ticket (CLOSED)" : "Cập nhật trạng thái"}
+              </Button>
+            )}
 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsHistoryModalOpen(true)}
-                  disabled={actionLoading}
-                  className="gap-1.5"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  Thêm nội dung xử lý
-                </Button>
-              </>
+            {/* Thêm nội dung xử lý: cho phép khi thuộc RECEIVED, IN_PROGRESS, WAITING_CUSTOMER, COMPLETED */}
+            {(ticket.status === "RECEIVED" ||
+              ticket.status === "IN_PROGRESS" ||
+              ticket.status === "WAITING_CUSTOMER" ||
+              ticket.status === "COMPLETED") && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsHistoryModalOpen(true)}
+                disabled={actionLoading}
+                className="gap-1.5"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Thêm nội dung xử lý
+              </Button>
             )}
           </div>
         )}
@@ -579,7 +639,9 @@ export default function SupportRequestDetailPage() {
             ) : (
               <div className="text-center py-4 text-muted-foreground text-sm space-y-2">
                 <p className="italic">Ticket chưa được phân công nhân viên xử lý.</p>
-                {ticket.status !== "NEW" && !isClosed && (
+                {(ticket.status === "RECEIVED" ||
+                  ticket.status === "IN_PROGRESS" ||
+                  ticket.status === "WAITING_CUSTOMER") && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -619,13 +681,24 @@ export default function SupportRequestDetailPage() {
                   onChange={(e) => setAssignStaffId(e.target.value)}
                   className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                   required
+                  disabled={staffLoading || actionLoading}
                 >
-                  <option value="">-- Chọn nhân viên --</option>
-                  {staffUsers.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {getUserDisplayName(user)} ({user.email})
-                    </option>
-                  ))}
+                  {staffLoading ? (
+                    <option value="">Đang tải danh sách nhân viên...</option>
+                  ) : staffError ? (
+                    <option value="">Lỗi: {staffError}</option>
+                  ) : staffUsers.length === 0 ? (
+                    <option value="">Không có nhân viên phù hợp</option>
+                  ) : (
+                    <>
+                      <option value="">-- Chọn nhân viên --</option>
+                      {staffUsers.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.fullName || user.username} {user.roleName ? `[${user.roleName}]` : ""} ({user.email})
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -651,7 +724,11 @@ export default function SupportRequestDetailPage() {
                 >
                   Hủy
                 </Button>
-                <Button type="submit" size="sm" disabled={actionLoading}>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={actionLoading || staffLoading || !assignStaffId}
+                >
                   Xác nhận Phân công
                 </Button>
               </div>
@@ -685,10 +762,11 @@ export default function SupportRequestDetailPage() {
                   className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                   required
                 >
-                  <option value="IN_PROGRESS">Đang xử lý (IN_PROGRESS)</option>
-                  <option value="WAITING_CUSTOMER">Chờ khách hàng (WAITING_CUSTOMER)</option>
-                  <option value="COMPLETED">Hoàn tất (COMPLETED)</option>
-                  <option value="CLOSED">Đóng ticket (CLOSED)</option>
+                  {(ALLOWED_TARGET_STATUSES[ticket.status] || []).map((st) => (
+                    <option key={st} value={st}>
+                      {STATUS_CONFIG[st]?.label || st} ({st})
+                    </option>
+                  ))}
                 </select>
               </div>
 

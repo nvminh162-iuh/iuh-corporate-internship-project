@@ -8,7 +8,7 @@
             "mainClass": "com.hs.user.TeleCareBackendApplication",
             "projectName": "telecare-backend",
             "args": "",
-            "envFile": "${workspaceFolder}/telecare-backend/.env.dev",
+            "envFile": "${workspaceFolder}/telecare-backend/.env",
             "console": "integratedTerminal"
         }
     ]

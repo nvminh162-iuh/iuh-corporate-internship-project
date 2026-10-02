@@ -101,3 +101,13 @@ export interface UpdateSupportRequestStatusPayload {
 export interface AddSupportRequestHistoryPayload {
   note: string;
 }
+
+export interface SupportRequestAssignee {
+  id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  fullName: string;
+  email?: string;
+  roleName?: string;
+}

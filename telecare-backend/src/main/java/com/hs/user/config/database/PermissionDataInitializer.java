@@ -49,7 +49,10 @@ public class PermissionDataInitializer implements CommandLineRunner {
                 Map.entry(PermissionConstants.Admin.CATEGORY_VIEW, "Xem danh sách nhóm dịch vụ"),
                 Map.entry(PermissionConstants.Admin.CATEGORY_CREATE, "Tạo nhóm dịch vụ"),
                 Map.entry(PermissionConstants.Admin.CATEGORY_UPDATE, "Cập nhật nhóm dịch vụ"),
-                Map.entry(PermissionConstants.Admin.CATEGORY_DELETE, "Xóa nhóm dịch vụ"));
+                Map.entry(PermissionConstants.Admin.CATEGORY_DELETE, "Xóa nhóm dịch vụ"),
+                Map.entry(PermissionConstants.Admin.SUPPORT_REQUEST_VIEW, "Xem danh sách và chi tiết yêu cầu hỗ trợ"),
+                Map.entry(PermissionConstants.Admin.SUPPORT_REQUEST_PROCESS, "Tiếp nhận và cập nhật trạng thái yêu cầu hỗ trợ"),
+                Map.entry(PermissionConstants.Admin.SUPPORT_REQUEST_ASSIGN, "Phân công nhân viên xử lý yêu cầu hỗ trợ"));
 
         permissions.forEach((name, description) -> {
             if (!permissionRepository.existsByName(name)) {

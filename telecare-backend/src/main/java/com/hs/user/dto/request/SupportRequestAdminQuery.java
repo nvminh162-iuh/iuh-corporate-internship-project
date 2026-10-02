@@ -1,6 +1,8 @@
 package com.hs.user.dto.request;
 
-import java.time.Instant;
+import java.time.LocalDate;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 import com.hs.user.model.constant.SupportRequestStatus;
 
@@ -24,6 +26,10 @@ public class SupportRequestAdminQuery {
     SupportRequestStatus status;
     String categoryCode;
     String assignedTo;
-    Instant fromDate;
-    Instant toDate;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    LocalDate fromDate;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    LocalDate toDate;
 }

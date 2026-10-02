@@ -85,6 +85,81 @@
             "description": "Signs in with the bootstrap admin seeded by telecare-backend on first run (BOOTSTRAP_ADMIN_USERNAME / BOOTSTRAP_ADMIN_PASSWORD, default telecare / Telecare@123), so no variable needs editing before running the collection."
           },
           "response": []
+        },
+        {
+          "name": "Sign in as Customer (For Permission Tests)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.access_token) {",
+                  "    pm.collectionVariables.set('customerToken', json.access_token);",
+                  "    pm.test('Customer token saved', () => pm.expect(pm.collectionVariables.get('customerToken')).to.not.be.empty);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{clientId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{customerUsername}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{customerPassword}}",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{scope}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloakUrl}}/realms/{{realm}}/protocol/openid-connect/token",
+              "host": [
+                "{{keycloakUrl}}"
+              ],
+              "path": [
+                "realms",
+                "{{realm}}",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            },
+            "description": "Signs in with a customer account to save customerToken for testing 403 Forbidden. If you don't have a test customer in Keycloak, you can set the customerToken collection variable directly."
+          },
+          "response": []
         }
       ]
     },
@@ -1019,12 +1094,36 @@
       "name": "Admin - Support Requests",
       "item": [
         {
-          "name": "01. Danh sách yêu cầu hỗ trợ (Admin)",
+          "name": "01. Danh sách ticket không có bộ lọc",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response format is valid ApiResponse with PageResponse\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('code');",
+                  "    pm.expect(jsonData).to.have.property('result');",
+                  "    pm.expect(jsonData.result).to.have.property('result');",
+                  "    if (!pm.collectionVariables.get(\"ticketId\") && jsonData.result.result.length > 0) {",
+                  "        var firstTicket = jsonData.result.result[0];",
+                  "        pm.collectionVariables.set(\"ticketId\", firstTicket.id);",
+                  "        pm.collectionVariables.set(\"ticketCode\", firstTicket.ticketCode);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/support-requests?page=0&size=10&status=NEW",
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?page=0&size=10",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1042,11 +1141,254 @@
                 {
                   "key": "size",
                   "value": "10"
-                },
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "02. Tìm theo mã ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Search returns matching tickets\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql(1000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?keyword={{ticketCode}}&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ],
+              "query": [
                 {
                   "key": "keyword",
-                  "value": "",
-                  "disabled": true
+                  "value": "{{ticketCode}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "03. Lọc theo trạng thái",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Filtered results match requested status\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    jsonData.result.result.forEach(function(item) {",
+                  "        pm.expect(item.status).to.eql('NEW');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?status=NEW&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "NEW"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "04. Lọc theo nhóm vấn đề",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Filtered results match requested category\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql(1000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?categoryCode=PACKAGE&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ],
+              "query": [
+                {
+                  "key": "categoryCode",
+                  "value": "PACKAGE"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "05. Lọc theo khoảng thời gian (YYYY-MM-DD)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Filtered results within date range successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql(1000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?fromDate=2026-09-01&toDate=2026-10-31&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ],
+              "query": [
+                {
+                  "key": "fromDate",
+                  "value": "2026-09-01"
+                },
+                {
+                  "key": "toDate",
+                  "value": "2026-10-31"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "06. Kết hợp nhiều bộ lọc",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Combined filter response is valid\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql(1000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?keyword=Internet&status=NEW&categoryCode=PACKAGE&fromDate=2026-09-01&toDate=2026-10-31&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "Internet"
                 },
                 {
                   "key": "status",
@@ -1054,20 +1396,50 @@
                 },
                 {
                   "key": "categoryCode",
-                  "value": "",
-                  "disabled": true
+                  "value": "PACKAGE"
                 },
                 {
-                  "key": "assignedTo",
-                  "value": "",
-                  "disabled": true
+                  "key": "fromDate",
+                  "value": "2026-09-01"
+                },
+                {
+                  "key": "toDate",
+                  "value": "2026-10-31"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
                 }
               ]
             }
           }
         },
         {
-          "name": "02. Xem chi tiết yêu cầu hỗ trợ (Admin)",
+          "name": "07. Xem chi tiết ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response contains full ticket detail\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result).to.have.property('id');",
+                  "    pm.expect(jsonData.result).to.have.property('ticketCode');",
+                  "    pm.expect(jsonData.result).to.have.property('status');",
+                  "    pm.expect(jsonData.result).to.have.property('subject');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -1087,7 +1459,66 @@
           }
         },
         {
-          "name": "03. Tiếp nhận Ticket (Admin/Staff)",
+          "name": "08. Lấy danh sách nhân viên hợp lệ (Assignees)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Eligible assignees list returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result).to.be.an('array');",
+                  "    pm.expect(jsonData.result.length).to.be.above(0);",
+                  "    var firstStaff = jsonData.result[0];",
+                  "    pm.collectionVariables.set(\"staffUserId\", firstStaff.id);",
+                  "    console.log(\"Selected staffUserId: \" + firstStaff.id + \" (\" + (firstStaff.fullName || firstStaff.username) + \")\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/assignees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "assignees"
+              ]
+            }
+          }
+        },
+        {
+          "name": "09. Tiếp nhận ticket (NEW -> RECEIVED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Status transitioned to RECEIVED\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result.status).to.eql('RECEIVED');",
+                  "    pm.expect(jsonData.result).to.have.property('receivedAt');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PATCH",
             "header": [],
@@ -1108,7 +1539,26 @@
           }
         },
         {
-          "name": "04. Phân công Ticket cho Nhân viên",
+          "name": "10. Phân công nhân viên (RECEIVED -> IN_PROGRESS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Ticket assigned and moved to IN_PROGRESS\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result.status).to.eql('IN_PROGRESS');",
+                  "    pm.expect(jsonData.result.assignedTo).to.not.be.null;",
+                  "    pm.expect(jsonData.result).to.have.property('assignedAt');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PATCH",
             "header": [
@@ -1119,7 +1569,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"assignedTo\": \"staff-user-id-here\",\n  \"note\": \"Phân công xử lý sự cố cho nhân viên hỗ trợ\"\n}"
+              "raw": "{\n  \"assignedTo\": \"{{staffUserId}}\",\n  \"note\": \"Phân công xử lý sự cố cho nhân viên hỗ trợ\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/assign",
@@ -1138,7 +1588,73 @@
           }
         },
         {
-          "name": "05. Cập nhật Trạng thái Ticket",
+          "name": "11. Thêm ghi chú xử lý",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"History note recorded successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result).to.have.property('id');",
+                  "    pm.expect(jsonData.result.note).to.eql('Ghi chú kỹ thuật viên đang tiến hành kiểm tra');",
+                  "    pm.expect(jsonData.result.action).to.eql('NOTE_ADDED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Ghi chú kỹ thuật viên đang tiến hành kiểm tra\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/histories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "histories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "12. Cập nhật sang WAITING_CUSTOMER",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Status is WAITING_CUSTOMER\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result.status).to.eql('WAITING_CUSTOMER');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PATCH",
             "header": [
@@ -1149,7 +1665,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"note\": \"Đã xử lý dứt điểm sự cố mạng\",\n  \"resolution\": \"Đã reset cổng modem và thay dây mạng CAT6 mới\"\n}"
+              "raw": "{\n  \"status\": \"WAITING_CUSTOMER\",\n  \"note\": \"Yêu cầu khách hàng cung cấp số đo suy hao hoặc kiểm tra đèn modem\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/status",
@@ -1168,9 +1684,26 @@
           }
         },
         {
-          "name": "06. Thêm Ghi chú / Lịch sử xử lý",
+          "name": "13. Cập nhật sang IN_PROGRESS (Quay lại từ WAITING_CUSTOMER)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Status is back to IN_PROGRESS\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result.status).to.eql('IN_PROGRESS');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "POST",
+            "method": "PATCH",
             "header": [
               {
                 "key": "Content-Type",
@@ -1179,8 +1712,191 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"note\": \"Liên hệ trực tiếp khách hàng qua điện thoại để kiểm tra tín hiệu thành công\"\n}"
+              "raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"note\": \"Khách hàng đã phản hồi cung cấp thông tin, tiếp tục xử lý\"\n}"
             },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "14. Cập nhật sang COMPLETED với resolution",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Status is COMPLETED and resolution is recorded\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result.status).to.eql('COMPLETED');",
+                  "    pm.expect(jsonData.result.resolution).to.eql('Đã bấm lại đầu quang và thay adapter nguồn');",
+                  "    pm.expect(jsonData.result).to.have.property('completedAt');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"note\": \"Đã khắc phục hoàn tất sự cố mạng\",\n  \"resolution\": \"Đã bấm lại đầu quang và thay adapter nguồn\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "15. Thử chuyển trạng thái không hợp lệ (COMPLETED -> NEW)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Error code indicates invalid status transition\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql(1603);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"NEW\",\n  \"note\": \"Cố tình chuyển trạng thái không hợp lệ về NEW\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "16. Đóng ticket (COMPLETED -> CLOSED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Status is CLOSED and closedAt recorded\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result.status).to.eql('CLOSED');",
+                  "    pm.expect(jsonData.result).to.have.property('closedAt');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CLOSED\",\n  \"note\": \"Khách hàng hài lòng, chính thức đóng ticket hỗ trợ\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests",
+                "{{ticketId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "17. Lấy lịch sử xử lý",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Histories list returned with full actions\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result).to.be.an('array');",
+                  "    pm.expect(jsonData.result.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/histories",
               "host": [
@@ -1198,12 +1914,87 @@
           }
         },
         {
-          "name": "07. Lấy danh sách lịch sử xử lý",
+          "name": "18. Request thiếu token (401 Unauthorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test(\"Error code indicates unauthenticated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql(1401);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/histories",
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ]
+            }
+          }
+        },
+        {
+          "name": "19. Request thiếu permission (403 Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test(\"Error code indicates unauthorized\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql(1403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignedTo\": \"{{staffUserId}}\",\n  \"note\": \"Customer không có quyền phân công\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests/{{ticketId}}/assign",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1213,7 +2004,7 @@
                 "admin",
                 "support-requests",
                 "{{ticketId}}",
-                "histories"
+                "assign"
               ]
             }
           }
@@ -1264,7 +2055,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:58080"
+      "value": "http://localhost:55080"
     },
     {
       "key": "keycloakUrl",
@@ -1368,6 +2159,30 @@
     },
     {
       "key": "createdUserId",
+      "value": ""
+    },
+    {
+      "key": "ticketId",
+      "value": ""
+    },
+    {
+      "key": "ticketCode",
+      "value": ""
+    },
+    {
+      "key": "staffUserId",
+      "value": ""
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "customerUsername",
+      "value": "customer"
+    },
+    {
+      "key": "customerPassword",
       "value": ""
     }
   ]
