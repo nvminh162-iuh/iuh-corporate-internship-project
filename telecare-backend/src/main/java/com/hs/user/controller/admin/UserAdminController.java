@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.http.HttpStatus;
@@ -51,8 +52,11 @@ public class UserAdminController {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'USER_VIEW')")
     public ApiResponse<PageResponse<UserResponse>> findAllUsers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String roleId,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        PageResponse<UserResponse> page = new PageResponse<>(userService.findAllUsers(pageable));
+        PageResponse<UserResponse> page = new PageResponse<>(userService.findAllUsers(keyword, active, roleId, pageable));
         return ApiResponse.<PageResponse<UserResponse>>builder()
                 .result(page)
                 .build();

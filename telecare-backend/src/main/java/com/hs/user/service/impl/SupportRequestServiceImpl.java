@@ -3,6 +3,7 @@ package com.hs.user.service.impl;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.stereotype.Service;
@@ -45,6 +46,14 @@ public class SupportRequestServiceImpl implements SupportRequestService {
 
     private static final AtomicLong fallbackSequence = new AtomicLong(1);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "createdAt",
+            "updatedAt",
+            "status",
+            "ticketCode",
+            "subject",
+            "id"
+    );
 
     @Override
     @Transactional(readOnly = true)
@@ -127,6 +136,8 @@ public class SupportRequestServiceImpl implements SupportRequestService {
             throw new AppException(ErrorCode.INVALID_DATE_RANGE);
         }
 
+        validateSortFields(pageable.getSort());
+
         int pageSize = Math.min(Math.max(pageable.getPageSize(), 1), 100);
         int pageNumber = Math.max(pageable.getPageNumber(), 0);
         org.springframework.data.domain.Sort sort = pageable.getSort().isSorted()
@@ -201,5 +212,16 @@ public class SupportRequestServiceImpl implements SupportRequestService {
         }
 
         return code;
+    }
+
+    private void validateSortFields(org.springframework.data.domain.Sort sort) {
+        if (sort == null || sort.isUnsorted()) {
+            return;
+        }
+        for (org.springframework.data.domain.Sort.Order order : sort) {
+            if (!ALLOWED_SORT_FIELDS.contains(order.getProperty())) {
+                throw new AppException(ErrorCode.INVALID_SORT_FIELD);
+            }
+        }
     }
 }

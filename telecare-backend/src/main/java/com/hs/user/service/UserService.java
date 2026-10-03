@@ -28,7 +28,12 @@ public interface UserService {
     void resendInvitation(String userId);
 
     @Transactional(readOnly = true)
-    Page<@NonNull UserResponse> findAllUsers(Pageable pageable);
+    Page<@NonNull UserResponse> findAllUsers(String keyword, Boolean active, String roleId, Pageable pageable);
+
+    @Transactional(readOnly = true)
+    default Page<@NonNull UserResponse> findAllUsers(Pageable pageable) {
+        return findAllUsers(null, null, null, pageable);
+    }
 
     @Transactional(readOnly = true)
     UserResponse findUserById(String userId);

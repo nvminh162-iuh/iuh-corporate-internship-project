@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/useAuth";
@@ -53,7 +53,15 @@ export default function UsersPage() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAdminUsers(page, size);
+      const activeParam =
+        statusFilter === "ACTIVE" ? true : statusFilter === "INACTIVE" ? false : undefined;
+      const data = await getAdminUsers({
+        page,
+        size,
+        keyword: searchQuery.trim() || undefined,
+        active: activeParam,
+        roleId: roleFilter !== "ALL" ? roleFilter : undefined,
+      });
       setUsers(data.result || []);
       setTotalPages(data.totalPages || 1);
       setTotalElements(data.totalElements || (data.result?.length ?? 0));
@@ -63,7 +71,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, size]);
+  }, [page, size, searchQuery, statusFilter, roleFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -71,6 +79,21 @@ export default function UsersPage() {
     }, 0);
     return () => clearTimeout(timer);
   }, [fetchUsers]);
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  };
+
+  const handleStatusChange = (status: StatusFilterType) => {
+    setStatusFilter(status);
+    setPage(1);
+  };
+
+  const handleRoleChange = (role: string) => {
+    setRoleFilter(role);
+    setPage(1);
+  };
 
   // Open Details Modal
   const handleViewDetails = async (user: AdminUser) => {
@@ -164,30 +187,6 @@ export default function UsersPage() {
     }
   };
 
-  // Client-side filtering on current page
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      const matchSearch =
-        searchQuery.trim() === "" ||
-        [u.username, u.email, u.firstName, u.lastName, u.phone]
-          .filter(Boolean)
-          .some((field) =>
-            field!.toLowerCase().includes(searchQuery.toLowerCase().trim()),
-          );
-
-      const matchStatus =
-        statusFilter === "ALL" ||
-        (statusFilter === "ACTIVE" && u.active) ||
-        (statusFilter === "INACTIVE" && !u.active);
-
-      const matchRole =
-        roleFilter === "ALL" ||
-        u.role?.toUpperCase() === roleFilter.toUpperCase();
-
-      return matchSearch && matchStatus && matchRole;
-    });
-  }, [users, searchQuery, statusFilter, roleFilter]);
-
   // Statistics
   const activeCount = users.filter((u) => u.active).length;
   const inactiveCount = users.filter((u) => !u.active).length;
@@ -206,11 +205,11 @@ export default function UsersPage() {
       {/* 2. Search, Filter & Action Toolbar */}
       <UserToolbar
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        onStatusFilterChange={handleStatusChange}
         roleFilter={roleFilter}
-        onRoleFilterChange={setRoleFilter}
+        onRoleFilterChange={handleRoleChange}
         loading={loading}
         onRefresh={fetchUsers}
         onOpenCreateModal={() => setIsCreateModalOpen(true)}
@@ -220,7 +219,7 @@ export default function UsersPage() {
       {/* 3. Data Table & Pagination */}
       <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-2xs">
         <UserTable
-          users={filteredUsers}
+          users={users}
           loading={loading}
           page={page}
           size={size}

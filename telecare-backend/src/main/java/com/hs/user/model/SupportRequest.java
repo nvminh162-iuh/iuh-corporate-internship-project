@@ -11,6 +11,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -24,7 +25,15 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "support_requests")
+@Table(
+    name = "support_requests",
+    indexes = {
+        @Index(name = "idx_support_requests_customer_created", columnList = "customer_id, created_at DESC"),
+        @Index(name = "idx_support_requests_status_created", columnList = "status, created_at DESC"),
+        @Index(name = "idx_support_requests_category_id", columnList = "category_id"),
+        @Index(name = "idx_support_requests_assigned_to", columnList = "assigned_to_id")
+    }
+)
 @Getter
 @Setter
 @Builder

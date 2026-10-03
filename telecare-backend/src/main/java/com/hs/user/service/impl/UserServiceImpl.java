@@ -12,7 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import com.hs.user.repository.specification.UserSpecification;
 
 import com.hs.user.advice.base.AppException;
 import com.hs.user.constant.base.ErrorCode;
@@ -116,12 +120,44 @@ public class UserServiceImpl implements UserService {
                 keycloakUserService.resendInvitation(userId);
         }
 
+        private static final Set<String> ALLOWED_USER_SORT_FIELDS = Set.of(
+                "createdAt",
+                "updatedAt",
+                "username",
+                "email",
+                "firstName",
+                "lastName",
+                "phone",
+                "id"
+        );
+
         @Override
         @Transactional(readOnly = true)
-        public Page<@NonNull UserResponse> findAllUsers(Pageable pageable) {
-                Page<User> users = userRepository.findAll(pageable);
+        public Page<@NonNull UserResponse> findAllUsers(String keyword, Boolean active, String roleId, Pageable pageable) {
+                validateSortFields(pageable.getSort());
+
+                int pageSize = Math.min(Math.max(1, pageable.getPageSize()), 100);
+                int pageNumber = Math.max(0, pageable.getPageNumber());
+                Sort sort = pageable.getSort().isSorted()
+                                ? pageable.getSort().and(Sort.by(Sort.Direction.DESC, "id"))
+                                : Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id"));
+                Pageable safePageable = PageRequest.of(pageNumber, pageSize, sort);
+
+                Specification<User> spec = UserSpecification.filterUsers(keyword, active, roleId);
+                Page<User> users = userRepository.findAll(spec, safePageable);
                 Map<String, User> actors = loadActors(users.getContent());
                 return users.map(user -> UserMapper.mapToUserResponse(user, actors));
+        }
+
+        private void validateSortFields(Sort sort) {
+                if (sort == null || sort.isUnsorted()) {
+                        return;
+                }
+                for (Sort.Order order : sort) {
+                        if (!ALLOWED_USER_SORT_FIELDS.contains(order.getProperty())) {
+                                throw new AppException(ErrorCode.INVALID_SORT_FIELD);
+                        }
+                }
         }
 
         @Override

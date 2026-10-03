@@ -12,6 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -22,7 +23,14 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "users")
+@Table(
+    name = "users",
+    indexes = {
+        @Index(name = "idx_users_role_id", columnList = "role_id"),
+        @Index(name = "idx_users_created_at", columnList = "created_at DESC"),
+        @Index(name = "idx_users_phone", columnList = "phone")
+    }
+)
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

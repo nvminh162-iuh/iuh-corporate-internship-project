@@ -6,24 +6,49 @@ import type {
   UpdateAdminUserRequest,
 } from "@/types/user.type";
 
+export interface GetAdminUsersParams {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  active?: boolean;
+  roleId?: string;
+}
+
 const pendingListRequests = new Map<string, Promise<PageResponse<AdminUser>>>();
 
-async function requestUsers(page: number, size: number): Promise<PageResponse<AdminUser>> {
+async function requestUsers(params: GetAdminUsersParams): Promise<PageResponse<AdminUser>> {
+  const { page = 1, size = 10, keyword, active, roleId } = params;
+  const queryParams: Record<string, string | number | boolean> = {
+    page: Math.max(page - 1, 0),
+    size,
+  };
+  if (keyword && keyword.trim()) {
+    queryParams.keyword = keyword.trim();
+  }
+  if (typeof active === "boolean") {
+    queryParams.active = active;
+  }
+  if (roleId && roleId.trim() && roleId !== "ALL") {
+    queryParams.roleId = roleId.trim();
+  }
+
   const { data } = await axiosClient.get<ApiResponse<PageResponse<AdminUser>>>(
     "/api/v1/admin/users",
-    { params: { page: Math.max(page - 1, 0), size } },
+    { params: queryParams },
   );
 
   return data.result;
 }
 
-export function getAdminUsers(page = 1, size = 10): Promise<PageResponse<AdminUser>> {
-  const key = `${page}:${size}`;
+export function getAdminUsers(params: GetAdminUsersParams | number = 1, size = 10): Promise<PageResponse<AdminUser>> {
+  const normalized: GetAdminUsersParams =
+    typeof params === "number" ? { page: params, size } : params;
+  const key = `${normalized.page || 1}:${normalized.size || 10}:${normalized.keyword || ""}:${normalized.active}:${normalized.roleId || ""}`;
   const pending = pendingListRequests.get(key);
 
   if (pending) return pending;
 
-  const request = requestUsers(page, size).finally(() => {
+  const request = requestUsers(normalized).finally(() => {
     pendingListRequests.delete(key);
   });
 

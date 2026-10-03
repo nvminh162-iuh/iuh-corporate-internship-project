@@ -80,6 +80,19 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
     UserRepository userRepository;
     NotificationService notificationService;
 
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "createdAt",
+            "updatedAt",
+            "status",
+            "ticketCode",
+            "subject",
+            "receivedAt",
+            "assignedAt",
+            "completedAt",
+            "closedAt",
+            "id"
+    );
+
     @Override
     @Transactional(readOnly = true)
     public Page<SupportRequestAdminSummaryResponse> findAllAdminSupportRequests(SupportRequestAdminQuery query, Pageable pageable) {
@@ -88,9 +101,13 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
             throw new AppException(ErrorCode.INVALID_DATE_RANGE);
         }
 
+        validateSortFields(pageable.getSort());
+
         int pageSize = Math.min(Math.max(pageable.getPageSize(), 1), 100);
         int pageNumber = Math.max(pageable.getPageNumber(), 0);
-        Sort sort = pageable.getSort().and(Sort.by(Sort.Direction.DESC, "id"));
+        Sort sort = pageable.getSort().isSorted()
+                ? pageable.getSort().and(Sort.by(Sort.Direction.DESC, "id"))
+                : Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id"));
         Pageable safePageable = PageRequest.of(pageNumber, pageSize, sort);
 
         Page<SupportRequest> requestsPage = supportRequestRepository.findAll(
@@ -98,11 +115,34 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
                 safePageable
         );
 
+        // Batch resolve customer user profiles in a single query to eliminate N+1 queries
+        Set<String> customerIds = requestsPage.getContent().stream()
+                .map(SupportRequest::getCustomerId)
+                .filter(id -> id != null && !id.isBlank())
+                .collect(java.util.stream.Collectors.toSet());
+
+        Map<String, UserResponse> customerMap = customerIds.isEmpty()
+                ? Collections.emptyMap()
+                : userRepository.findAllById(customerIds).stream()
+                        .map(UserMapper::mapToUserResponse)
+                        .collect(java.util.stream.Collectors.toMap(UserResponse::id, java.util.function.Function.identity(), (a, b) -> a));
+
         return requestsPage.map(req -> {
-            UserResponse customer = resolveUser(req.getCustomerId());
+            UserResponse customer = req.getCustomerId() != null ? customerMap.get(req.getCustomerId()) : null;
             UserResponse assignedTo = req.getAssignedTo() != null ? UserMapper.mapToUserResponse(req.getAssignedTo()) : null;
             return SupportRequestMapper.mapToAdminSummaryResponse(req, customer, assignedTo);
         });
+    }
+
+    private void validateSortFields(Sort sort) {
+        if (sort == null || sort.isUnsorted()) {
+            return;
+        }
+        for (Sort.Order order : sort) {
+            if (!ALLOWED_SORT_FIELDS.contains(order.getProperty())) {
+                throw new AppException(ErrorCode.INVALID_SORT_FIELD);
+            }
+        }
     }
 
     @Override

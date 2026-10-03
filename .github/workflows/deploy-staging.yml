@@ -1,0 +1,182 @@
+name: Deploy to Staging (AWS EC2)
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_sha:
+        description: 'Git Commit SHA to deploy (leave blank for latest commit on branch)'
+        required: false
+        default: ''
+
+permissions:
+  id-token: write   # Required for AWS OIDC authentication
+  contents: read    # Required for actions/checkout
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Job 1: Build & Push Immutable Docker Images to Amazon ECR via OIDC
+  # ----------------------------------------------------------------------------
+  build-and-push:
+    name: Build & Push Images to ECR
+    runs-on: ubuntu-latest
+    environment: staging
+    outputs:
+      image_tag: ${{ steps.determine-tag.outputs.tag }}
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.git_sha || github.sha }}
+
+      - name: Determine Target Image Tag
+        id: determine-tag
+        run: |
+          TARGET_TAG="${{ github.event.inputs.git_sha }}"
+          if [ -z "$TARGET_TAG" ]; then
+            TARGET_TAG="${{ github.sha }}"
+          fi
+          echo "tag=$TARGET_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS Credentials using OIDC (Zero static credentials)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          role-session-name: GitHubActionsStagingDeploy
+          aws-region: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      # Backend Container Build & Push
+      - name: Build & Push TeleCare Backend Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./telecare-backend
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_BACKEND_REPO }}:${{ steps.determine-tag.outputs.tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_BACKEND_REPO }}:staging
+
+      # Admin Portal Container Build & Push
+      - name: Build & Push Admin Portal Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./telecare-admin-portal
+          push: true
+          build-args: |
+            VITE_KEYCLOAK_BASE_URL=${{ vars.STAGING_KEYCLOAK_URL }}
+            VITE_KEYCLOAK_REALM=${{ vars.STAGING_KEYCLOAK_REALM || 'telecare-platform' }}
+            VITE_KEYCLOAK_CLIENT_ID=${{ vars.STAGING_KEYCLOAK_ADMIN_CLIENT_ID || 'telecare-admin-id' }}
+            VITE_GATEWAY_BASE_URL=${{ vars.STAGING_BACKEND_URL }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_ADMIN_PORTAL_REPO }}:${{ steps.determine-tag.outputs.tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_ADMIN_PORTAL_REPO }}:staging
+
+      # Customer Web App Container Build & Push
+      - name: Build & Push Customer Web App Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./telecare-web-app
+          push: true
+          build-args: |
+            NEXT_PUBLIC_KEYCLOAK_BASE_URL=${{ vars.STAGING_KEYCLOAK_URL }}
+            NEXT_PUBLIC_KEYCLOAK_REALM=${{ vars.STAGING_KEYCLOAK_REALM || 'telecare-platform' }}
+            NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ vars.STAGING_KEYCLOAK_CLIENT_ID || 'telecare-id' }}
+            NEXT_PUBLIC_GATEWAY_BASE_URL=${{ vars.STAGING_BACKEND_URL }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_WEB_APP_REPO }}:${{ steps.determine-tag.outputs.tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_WEB_APP_REPO }}:staging
+
+  # ----------------------------------------------------------------------------
+  # Job 2: Secure SSH Deployment & Health Verification on EC2 Staging
+  # ----------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy & Healthcheck on EC2 Staging
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout Source Code for Compose Sync
+        uses: actions/checkout@v4
+
+      - name: Set up SSH Private Key with Strict Host Key Verification
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" > ~/.ssh/staging_key
+          chmod 600 ~/.ssh/staging_key
+          echo "${{ secrets.STAGING_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Copy Staging Compose Configuration to EC2
+        run: |
+          scp -i ~/.ssh/staging_key -o StrictHostKeyChecking=yes \
+            telecare-infrastructure/docker-compose.staging.yml \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }}:${{ vars.STAGING_APP_DIR || '/home/ubuntu/telecare' }}/docker-compose.staging.yml
+
+      - name: Execute Controlled Rolling Update on EC2
+        env:
+          NEW_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+          DEPLOY_DIR: ${{ vars.STAGING_APP_DIR || '/home/ubuntu/telecare' }}
+          SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+          SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+        run: |
+          ssh -i ~/.ssh/staging_key -o StrictHostKeyChecking=yes ${SSH_USER}@${SSH_HOST} bash -s << 'EOF'
+            set -euo pipefail
+            cd "${DEPLOY_DIR}"
+
+            echo "==> Recording current deployment state for rollback capability..."
+            PREVIOUS_TAG=$(grep -E '^IMAGE_TAG=' .env 2>/dev/null | cut -d'=' -f2 || echo "latest")
+            echo "Previous image tag: ${PREVIOUS_TAG}"
+
+            echo "==> Authenticating Docker to Amazon ECR using EC2 Instance Profile..."
+            aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AWS --password-stdin "$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+            echo "==> Updating IMAGE_TAG to ${NEW_TAG} in staging environment..."
+            if grep -q '^IMAGE_TAG=' .env; then
+              sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${NEW_TAG}/" .env
+            else
+              echo "IMAGE_TAG=${NEW_TAG}" >> .env
+            fi
+
+            echo "==> Pulling target release images..."
+            docker compose -f docker-compose.staging.yml pull
+
+            echo "==> Applying rolling update..."
+            docker compose -f docker-compose.staging.yml up -d --remove-orphans
+
+            echo "==> Running Health and Smoke Verification..."
+            HEALTHY=false
+            for i in $(seq 1 12); do
+              echo "Health check attempt $i/12..."
+              if curl -s -f http://localhost:55080/api/v1/actuator/health > /dev/null && \
+                 wget -q -O- http://localhost:55000/health > /dev/null && \
+                 wget -q -O- http://localhost:53000 > /dev/null; then
+                HEALTHY=true
+                echo "==> All 3 services (backend, admin-portal, web-app) are HEALTHY!"
+                break
+              fi
+              sleep 5
+            done
+
+            if [ "$HEALTHY" = false ]; then
+              echo "ERROR: Health check failed! Initiating rollback to ${PREVIOUS_TAG}..."
+              sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${PREVIOUS_TAG}/" .env
+              docker compose -f docker-compose.staging.yml pull
+              docker compose -f docker-compose.staging.yml up -d --remove-orphans
+              echo "Rollback to ${PREVIOUS_TAG} completed successfully. Data volumes preserved."
+              exit 1
+            fi
+
+            echo "==> Staging Deployment SUCCESSFUL with image tag: ${NEW_TAG}"
+          EOF
+
+      - name: Cleanup Local SSH Keys
+        if: always()
+        run: rm -rf ~/.ssh/staging_key

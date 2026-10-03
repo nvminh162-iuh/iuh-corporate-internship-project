@@ -2,6 +2,11 @@ package com.hs.user.repository;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +17,11 @@ import com.hs.user.model.ServicePlan;
 
 @Repository
 public interface ServicePlanRepository extends JpaRepository<ServicePlan, String>, JpaSpecificationExecutor<ServicePlan> {
+
+    @Override
+    @NonNull
+    @EntityGraph(attributePaths = {"category"})
+    Page<ServicePlan> findAll(Specification<ServicePlan> spec, @NonNull Pageable pageable);
 
     boolean existsByCode(String code);
 
