@@ -29,7 +29,6 @@ export default function RolesPage() {
   const [loadingDetails, setLoadingDetails] = useState(false);
 
   const fetchRoles = useCallback(async () => {
-    setLoading(true);
     try {
       const data = await getAdminRoles(page, size, true);
       setRoles(data.result || []);
@@ -43,8 +42,22 @@ export default function RolesPage() {
   }, [page, size]);
 
   useEffect(() => {
-    fetchRoles();
-  }, [fetchRoles]);
+    let active = true;
+    getAdminRoles(page, size, true)
+      .then((data) => {
+        if (!active) return;
+        setRoles(data.result || []);
+        setTotalPages(data.totalPages || 1);
+        setTotalElements(data.totalElements || (data.result?.length ?? 0));
+      })
+      .catch((error) => {
+        if (active) toast.error(getApiErrorMessage(error, "Không thể tải danh sách vai trò."));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [page, size]);
 
   useEffect(() => {
     getAllAdminPermissions()
@@ -90,7 +103,10 @@ export default function RolesPage() {
         onSearchChange={setSearchQuery}
         placeholder="Tìm theo tên hoặc mô tả vai trò..."
         loading={loading}
-        onRefresh={fetchRoles}
+        onRefresh={() => {
+          setLoading(true);
+          void fetchRoles();
+        }}
       />
 
       <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-2xs">
@@ -109,8 +125,12 @@ export default function RolesPage() {
           totalElements={totalElements}
           loading={loading}
           itemLabel="vai trò"
-          onPageChange={setPage}
+          onPageChange={(nextPage) => {
+            setLoading(true);
+            setPage(nextPage);
+          }}
           onSizeChange={(nextSize) => {
+            setLoading(true);
             setSize(nextSize);
             setPage(1);
           }}

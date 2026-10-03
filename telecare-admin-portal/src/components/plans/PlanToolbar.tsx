@@ -33,11 +33,6 @@ export default function PlanToolbar({
 }: PlanToolbarProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
 
-  // Sync external searchQuery state if reset externally
-  useEffect(() => {
-    setLocalSearch(searchQuery);
-  }, [searchQuery]);
-
   // Debounce search change by 400ms
   useEffect(() => {
     const handler = setTimeout(() => {

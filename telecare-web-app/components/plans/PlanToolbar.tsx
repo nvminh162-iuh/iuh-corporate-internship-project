@@ -38,16 +38,6 @@ export default function PlanToolbar({
   const [maxPriceInput, setMaxPriceInput] = useState(maxPrice?.toString() || "");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Sync external props to local input state
-  useEffect(() => {
-    setSearchInput(keyword);
-  }, [keyword]);
-
-  useEffect(() => {
-    setMinPriceInput(minPrice?.toString() || "");
-    setMaxPriceInput(maxPrice?.toString() || "");
-  }, [minPrice, maxPrice]);
-
   // Debounce search input change by 300ms
   useEffect(() => {
     const handler = setTimeout(() => {

@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   HelpCircle,
-  Sparkles,
   Send,
   AlertCircle,
   RefreshCw,
@@ -18,7 +17,6 @@ import {
   Phone,
   Mail,
   Package,
-  Layers,
   Clock,
   LogIn,
 } from "lucide-react";
@@ -37,7 +35,6 @@ export default function SupportNewPageWrapper() {
 }
 
 function SupportNewPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { authenticated, login } = useAuth();
 
@@ -49,10 +46,10 @@ function SupportNewPage() {
   const [categories, setCategories] = useState<SupportCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [categoryLoadAttempt, setCategoryLoadAttempt] = useState(0);
 
   // Form state
   const [selectedCategoryCode, setSelectedCategoryCode] = useState<string>("");
-  const [servicePlanId, setServicePlanId] = useState<string>(planIdQuery);
   const [subject, setSubject] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const [contactPhone, setContactPhone] = useState<string>("");
@@ -66,37 +63,30 @@ function SupportNewPage() {
   const [createdTicket, setCreatedTicket] = useState<SupportRequest | null>(null);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
-  // Fetch support categories
-  const fetchCategories = async () => {
-    setCategoriesLoading(true);
-    setCategoriesError(null);
-    try {
-      const data = await supportService.getSupportCategories();
-      setCategories(data);
-      if (data.length > 0) {
-        // Default select PACKAGE if plan query is present, else first category
-        const defaultCat = planIdQuery
-          ? data.find((c) => c.code === "PACKAGE") || data[0]
-          : data[0];
-        setSelectedCategoryCode(defaultCat.code);
-      }
-    } catch {
-      setCategoriesError("Không thể tải danh sách nhóm vấn đề. Vui lòng thử lại sau.");
-    } finally {
-      setCategoriesLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  // Update category if query planId changes
-  useEffect(() => {
-    if (planIdQuery) {
-      setServicePlanId(planIdQuery);
-    }
-  }, [planIdQuery]);
+    let isMounted = true;
+    supportService
+      .getSupportCategories()
+      .then((data) => {
+        if (!isMounted) return;
+        setCategories(data);
+        if (data.length > 0) {
+          const defaultCat = planIdQuery
+            ? data.find((category) => category.code === "PACKAGE") || data[0]
+            : data[0];
+          setSelectedCategoryCode(defaultCat.code);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setCategoriesError("Không thể tải danh sách nhóm vấn đề. Vui lòng thử lại sau.");
+      })
+      .finally(() => {
+        if (isMounted) setCategoriesLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [categoryLoadAttempt, planIdQuery]);
 
   // Client-side validation
   const validateForm = (): boolean => {
@@ -161,7 +151,7 @@ function SupportNewPage() {
     try {
       const ticket = await supportService.createSupportRequest({
         categoryCode: selectedCategoryCode,
-        servicePlanId: servicePlanId.trim() || undefined,
+        servicePlanId: planIdQuery.trim() || undefined,
         subject: subject.trim(),
         content: content.trim(),
         contactPhone: contactPhone.trim() || undefined,
@@ -361,7 +351,11 @@ function SupportNewPage() {
                       <span>{categoriesError}</span>
                       <button
                         type="button"
-                        onClick={fetchCategories}
+                        onClick={() => {
+                          setCategoriesLoading(true);
+                          setCategoriesError(null);
+                          setCategoryLoadAttempt((attempt) => attempt + 1);
+                        }}
                         className="text-xs underline font-bold"
                       >
                         Thử lại

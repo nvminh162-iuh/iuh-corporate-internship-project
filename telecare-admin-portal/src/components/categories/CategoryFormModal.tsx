@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { X, Save, FolderPlus, Edit3, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,23 +35,20 @@ export default function CategoryFormModal({
   onClose,
   onSuccess,
 }: CategoryFormModalProps) {
-  const [form, setForm] = useState<FormState>(DEFAULT_FORM_STATE);
+  const categoryForm = (category: ServiceCategory | null): FormState => category ? ({
+    code: category.code || "",
+    name: category.name || "",
+    description: category.description || "",
+    displayOrder: category.displayOrder || 0,
+  }) : DEFAULT_FORM_STATE;
+  const [form, setForm] = useState<FormState>(() => categoryForm(editingCategory));
+  const [previousProps, setPreviousProps] = useState({ isOpen, editingCategory });
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    if (editingCategory) {
-      setForm({
-        code: editingCategory.code || "",
-        name: editingCategory.name || "",
-        description: editingCategory.description || "",
-        displayOrder: editingCategory.displayOrder || 0,
-      });
-    } else {
-      setForm(DEFAULT_FORM_STATE);
-    }
-  }, [isOpen, editingCategory]);
+  if (isOpen !== previousProps.isOpen || editingCategory !== previousProps.editingCategory) {
+    setPreviousProps({ isOpen, editingCategory });
+    setForm(categoryForm(editingCategory));
+  }
 
   if (!isOpen) return null;
 

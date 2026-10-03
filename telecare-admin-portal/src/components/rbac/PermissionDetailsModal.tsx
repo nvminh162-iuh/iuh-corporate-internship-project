@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { X, Pencil, Check, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,12 +27,14 @@ export default function PermissionDetailsModal({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [description, setDescription] = useState("");
+  const [previousModalKey, setPreviousModalKey] = useState("");
+  const modalKey = `${isOpen}:${selectedPermission?.id ?? "none"}:${isInitialEditing}`;
 
-  useEffect(() => {
-    if (!selectedPermission) return;
-    setDescription(selectedPermission.description ?? "");
-    setIsEditing(isInitialEditing);
-  }, [selectedPermission, isInitialEditing]);
+  if (modalKey !== previousModalKey) {
+    setPreviousModalKey(modalKey);
+    setDescription(selectedPermission?.description ?? "");
+    setIsEditing(Boolean(selectedPermission && isInitialEditing));
+  }
 
   if (!isOpen || !selectedPermission) return null;
 

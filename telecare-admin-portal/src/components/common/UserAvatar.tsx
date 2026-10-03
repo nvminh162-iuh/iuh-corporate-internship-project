@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface UserAvatarProps {
   src?: string | null;
@@ -15,12 +15,8 @@ export default function UserAvatar({
   sizeClassName = "w-10 h-10 text-sm",
   fallbackClassName = "",
 }: UserAvatarProps) {
-  const [hasError, setHasError] = useState(false);
-
-  // Reset error state if src changes
-  useEffect(() => {
-    setHasError(false);
-  }, [src]);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const hasError = Boolean(src && failedSrc === src);
 
   const displayName = (name || "").trim() || "User";
   const initial = (displayName.charAt(0) || "U").toUpperCase();
@@ -42,7 +38,7 @@ export default function UserAvatar({
       alt={displayName}
       referrerPolicy="no-referrer"
       loading="lazy"
-      onError={() => setHasError(true)}
+      onError={() => setFailedSrc(src)}
       className={`rounded-full object-cover border border-border shrink-0 ${sizeClassName} ${className}`}
     />
   );

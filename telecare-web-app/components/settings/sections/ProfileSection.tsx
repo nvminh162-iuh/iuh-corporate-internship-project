@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { Camera, Check, LoaderCircle } from 'lucide-react';
 import userService from '@/services/user.service';
-import storageService from '@/services/storage.service';
 import AvatarCropModal from '@/components/avatar/AvatarCropModal';
 import { fetchCurrentUser } from '@/features/user/userSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';

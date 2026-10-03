@@ -23,10 +23,6 @@ export default function CategoryToolbar({
   const [localSearch, setLocalSearch] = useState(searchQuery);
 
   useEffect(() => {
-    setLocalSearch(searchQuery);
-  }, [searchQuery]);
-
-  useEffect(() => {
     const handler = setTimeout(() => {
       if (localSearch !== searchQuery) {
         onSearchChange(localSearch);

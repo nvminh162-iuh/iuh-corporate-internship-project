@@ -111,6 +111,7 @@ export default function CategoriesPage() {
       <div className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden">
         {/* Toolbar */}
         <CategoryToolbar
+          key={searchQuery}
           searchQuery={searchQuery}
           loading={loading}
           canCreate={canCreate}

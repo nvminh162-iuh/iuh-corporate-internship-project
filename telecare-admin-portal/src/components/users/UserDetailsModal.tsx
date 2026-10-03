@@ -41,6 +41,17 @@ const EMPTY_EDIT_FORM: EditFormState = {
   roleId: "",
 };
 
+const toEditForm = (user: AdminUser): EditFormState => ({
+  firstName: user.firstName ?? "",
+  lastName: user.lastName ?? "",
+  username: user.username ?? "",
+  email: user.email ?? "",
+  phone: user.phone ?? "",
+  dob: user.dob ?? "",
+  gender: (user.gender as EditFormState["gender"]) ?? "",
+  roleId: user.roleId ?? "",
+});
+
 interface UserDetailsModalProps {
   isOpen: boolean;
   selectedUser: AdminUser | null;
@@ -72,6 +83,14 @@ export default function UserDetailsModal({
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState<EditFormState>(EMPTY_EDIT_FORM);
   const [roles, setRoles] = useState<AdminRole[]>([]);
+  const [previousModalKey, setPreviousModalKey] = useState("");
+  const modalKey = `${isOpen}:${selectedUser?.id ?? "none"}:${isInitialEditing}`;
+
+  if (modalKey !== previousModalKey) {
+    setPreviousModalKey(modalKey);
+    setIsEditing(Boolean(isOpen && selectedUser && isInitialEditing));
+    setEditForm(isOpen && selectedUser && isInitialEditing ? toEditForm(selectedUser) : EMPTY_EDIT_FORM);
+  }
 
   useEffect(() => {
     if (!isOpen) return;
@@ -79,15 +98,6 @@ export default function UserDetailsModal({
       .then(setRoles)
       .catch(() => setRoles([]));
   }, [isOpen]);
-
-  useEffect(() => {
-    if (isInitialEditing && selectedUser) {
-      startEditing(selectedUser);
-    } else {
-      setIsEditing(false);
-      setEditForm(EMPTY_EDIT_FORM);
-    }
-  }, [isInitialEditing, selectedUser]);
 
   if (!isOpen || !selectedUser) return null;
 
@@ -98,16 +108,7 @@ export default function UserDetailsModal({
   const isSelf = Boolean(currentUserId && selectedUser.id === currentUserId);
 
   const startEditing = (user: AdminUser) => {
-    setEditForm({
-      firstName: user.firstName ?? "",
-      lastName: user.lastName ?? "",
-      username: user.username ?? "",
-      email: user.email ?? "",
-      phone: user.phone ?? "",
-      dob: user.dob ?? "",
-      gender: (user.gender as EditFormState["gender"]) ?? "",
-      roleId: user.roleId ?? "",
-    });
+    setEditForm(toEditForm(user));
     setIsEditing(true);
   };
 

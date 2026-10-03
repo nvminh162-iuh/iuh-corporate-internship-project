@@ -33,6 +33,7 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
 
         // 1. Resolve Role and Permissions directly from local PostgreSQL database
         boolean userFoundInDb = false;
+        boolean localLookupFailed = false;
         try {
             var userOpt = userRepository.findById(userId);
             if (userOpt.isPresent()) {
@@ -58,11 +59,15 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
                 }
             }
         } catch (Exception e) {
-            log.warn("Could not load user permissions from database for userId {}: {}", userId, e.getMessage());
+            // A failed lookup is not equivalent to a user missing from the local database.
+            // Do not fall back to token roles when the authoritative local store is unavailable.
+            localLookupFailed = true;
+            log.warn("Could not load local authorities for userId {} ({}); denying application authorities",
+                    userId, e.getClass().getSimpleName());
         }
 
         // 2. Extract roles from Keycloak JWT claims as fallback only if user is NOT in local database
-        if (!userFoundInDb) {
+        if (!userFoundInDb && !localLookupFailed) {
             extractKeycloakRoles(jwt).forEach(role -> {
                 String normalized = normalizeRole(role);
                 if (!normalized.isBlank()) {

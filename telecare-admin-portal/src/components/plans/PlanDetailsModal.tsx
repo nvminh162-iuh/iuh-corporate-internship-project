@@ -24,17 +24,23 @@ export default function PlanDetailsModal({
 }: PlanDetailsModalProps) {
   const [detail, setDetail] = useState<ServicePlanDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [previousModalKey, setPreviousModalKey] = useState("");
+  const modalKey = `${isOpen}:${selectedPlan?.id ?? "none"}`;
+
+  if (modalKey !== previousModalKey) {
+    setPreviousModalKey(modalKey);
+    setDetail(null);
+    setLoading(isOpen && Boolean(selectedPlan));
+  }
 
   useEffect(() => {
-    if (!isOpen || !selectedPlan) {
-      setDetail(null);
-      return;
-    }
-    setLoading(true);
+    if (!isOpen || !selectedPlan) return;
+    let active = true;
     getAdminPlanById(selectedPlan.id)
-      .then((data) => setDetail(data))
-      .catch(() => setDetail(null))
-      .finally(() => setLoading(false));
+      .then((data) => { if (active) setDetail(data); })
+      .catch(() => { if (active) setDetail(null); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [isOpen, selectedPlan]);
 
   if (!isOpen || !selectedPlan) return null;

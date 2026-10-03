@@ -150,7 +150,7 @@ function ProfileContent({
           ? requestError.message
           : "Không thể cập nhật ảnh đại diện.";
       toast.error(message);
-      throw new Error(message);
+      throw new Error(message, { cause: requestError });
     } finally {
       setUploadingAvatar(false);
     }

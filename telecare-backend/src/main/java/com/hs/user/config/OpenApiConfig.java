@@ -21,6 +21,9 @@ public class OpenApiConfig {
     @Value("${server.servlet.context-path:/api/v1}")
     private String contextPath;
 
+    @Value("${server.port:55080}")
+    private int serverPort;
+
     @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";
@@ -34,7 +37,7 @@ public class OpenApiConfig {
                         .license(new License().name("Internal Proprietary").url("https://telecare.vn")))
                 .servers(List.of(
                         new Server().url(contextPath).description("Current Environment Server"),
-                        new Server().url("http://localhost:58080" + contextPath).description("Local Development Server")
+                        new Server().url("http://localhost:" + serverPort + contextPath).description("Local Development Server")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()

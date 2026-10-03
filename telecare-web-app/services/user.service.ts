@@ -1,4 +1,3 @@
-import axios from "axios";
 import axiosClient from "@/lib/axios-client";
 import type { ApiResponse } from "@/types/api.type";
 import type {
@@ -7,8 +6,6 @@ import type {
   UpdatePasswordRequest,
   UpdateUserAvatarRequest,
   UpdateUserProfileRequest,
-  UpsertUserAddressRequest,
-  UserAddress,
   UserProfile,
 } from "@/types/user.type";
 

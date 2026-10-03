@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { X, Pencil, Check, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,13 +31,15 @@ export default function RoleDetailsModal({
   const [isSaving, setIsSaving] = useState(false);
   const [description, setDescription] = useState("");
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
+  const [previousModalKey, setPreviousModalKey] = useState("");
+  const modalKey = `${isOpen}:${selectedRole?.id ?? "none"}:${isInitialEditing}`;
 
-  useEffect(() => {
-    if (!selectedRole) return;
-    setDescription(selectedRole.description ?? "");
-    setSelectedPermissionIds((selectedRole.permissions ?? []).map((item) => item.id));
-    setIsEditing(isInitialEditing);
-  }, [selectedRole, isInitialEditing]);
+  if (modalKey !== previousModalKey) {
+    setPreviousModalKey(modalKey);
+    setDescription(selectedRole?.description ?? "");
+    setSelectedPermissionIds((selectedRole?.permissions ?? []).map((item) => item.id));
+    setIsEditing(Boolean(selectedRole && isInitialEditing));
+  }
 
   const groupedPermissions = useMemo(() => {
     const groups: Record<string, AdminPermission[]> = {};

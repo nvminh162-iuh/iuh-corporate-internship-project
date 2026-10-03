@@ -65,22 +65,35 @@ export default function PlanFormModal({
   onClose,
   onSuccess,
 }: PlanFormModalProps) {
-  const [form, setForm] = useState<FormState>(DEFAULT_FORM_STATE);
+  const [form, setForm] = useState<FormState>(() => ({
+    ...DEFAULT_FORM_STATE,
+    categoryId: categories[0]?.id || "",
+  }));
   const [loading, setLoading] = useState(false);
-  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [loadingDetails, setLoadingDetails] = useState(Boolean(editingPlan));
 
   // Auto slug generation from plan name if slug is not manually set
-  const [autoSlug, setAutoSlug] = useState(true);
+  const [autoSlug, setAutoSlug] = useState(!editingPlan);
+  const [previousModalKey, setPreviousModalKey] = useState("");
+  const modalKey = `${isOpen}:${editingPlan?.id ?? "new"}`;
+
+  if (modalKey !== previousModalKey) {
+    setPreviousModalKey(modalKey);
+    setForm({
+      ...DEFAULT_FORM_STATE,
+      categoryId: categories[0]?.id || "",
+    });
+    setLoadingDetails(Boolean(isOpen && editingPlan));
+    setAutoSlug(!editingPlan);
+  }
 
   // Fetch full details if editing
   useEffect(() => {
-    if (!isOpen) return;
-
-    if (editingPlan) {
-      setLoadingDetails(true);
-      setAutoSlug(false);
+    if (isOpen && editingPlan) {
+      let active = true;
       getAdminPlanById(editingPlan.id)
         .then((detail: ServicePlanDetail) => {
+          if (!active) return;
           setForm({
             code: detail.code || "",
             slug: detail.slug || "",
@@ -104,17 +117,12 @@ export default function PlanFormModal({
           });
         })
         .catch((err) => {
-          toast.error(getApiErrorMessage(err, "Không thể tải chi tiết gói cước"));
+          if (active) toast.error(getApiErrorMessage(err, "Không thể tải chi tiết gói cước"));
         })
-        .finally(() => setLoadingDetails(false));
-    } else {
-      setAutoSlug(true);
-      setForm({
-        ...DEFAULT_FORM_STATE,
-        categoryId: categories.length > 0 ? categories[0].id : "",
-      });
+        .finally(() => { if (active) setLoadingDetails(false); });
+      return () => { active = false; };
     }
-  }, [isOpen, editingPlan, categories]);
+  }, [isOpen, editingPlan]);
 
   if (!isOpen) return null;
 

@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Lock, Check, LoaderCircle } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import userService from "@/services/user.service";
 import { changePasswordSchema } from "@/validation/password.schema";
 import { useAuth } from "@/features/auth/useAuth";
@@ -11,7 +10,6 @@ import { toast } from "sonner";
 
 export default function AccountSecuritySection() {
   const { logout } = useAuth();
-  const [twoFactorAuth, setTwoFactorAuth] = useState(true);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

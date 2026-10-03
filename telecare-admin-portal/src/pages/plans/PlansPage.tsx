@@ -147,6 +147,7 @@ export default function PlansPage() {
       <div className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden">
         {/* Toolbar */}
         <PlanToolbar
+          key={`${searchQuery}:${selectedCategory}:${selectedStatus}`}
           searchQuery={searchQuery}
           selectedCategory={selectedCategory}
           selectedStatus={selectedStatus}

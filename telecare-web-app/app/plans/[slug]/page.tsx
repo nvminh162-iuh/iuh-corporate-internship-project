@@ -37,36 +37,42 @@ export default function PlanDetailPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [reloadCount, setReloadCount] = useState(0);
 
   // Subscribe modal state
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [subscribedSuccess, setSubscribedSuccess] = useState(false);
 
-  const fetchPlanDetail = async () => {
-    setLoading(true);
-    setError(null);
-    setNotFound(false);
-
-    try {
-      const data = await publicPlanService.getPublicPlanBySlug(slug);
-      setPlan(data);
-    } catch (err) {
-      if (typeof err === "object" && err !== null && "response" in err) {
-        const axiosError = err as { response?: { status?: number; data?: { message?: string } } };
-        if (axiosError.response?.status === 404) {
-          setNotFound(true);
-          return;
-        }
-      }
-      setError(getApiErrorMessage(err, "Không thể tải thông tin gói cước. Vui lòng thử lại sau."));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchPlanDetail();
-  }, [slug]);
+    let isMounted = true;
+    const loadPlanDetail = async () => {
+      try {
+        const data = await publicPlanService.getPublicPlanBySlug(slug);
+        if (isMounted) {
+          setPlan(data);
+          setError(null);
+          setNotFound(false);
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        if (typeof err === "object" && err !== null && "response" in err) {
+          const axiosError = err as { response?: { status?: number; data?: { message?: string } } };
+          if (axiosError.response?.status === 404) {
+            setNotFound(true);
+            setLoading(false);
+            return;
+          }
+        }
+        setError(getApiErrorMessage(err, "Không thể tải thông tin gói cước. Vui lòng thử lại sau."));
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    void loadPlanDetail();
+    return () => {
+      isMounted = false;
+    };
+  }, [slug, reloadCount]);
 
   const handleConfirmSubscription = () => {
     setSubscribedSuccess(true);
@@ -126,7 +132,10 @@ export default function PlanDetailPage({ params }: PageProps) {
             <p className="text-xs text-muted-foreground">{error || "Không có dữ liệu gói cước."}</p>
             <button
               type="button"
-              onClick={fetchPlanDetail}
+              onClick={() => {
+                setLoading(true);
+                setReloadCount((count) => count + 1);
+              }}
               className="h-10 px-6 rounded-2xl bg-destructive text-destructive-foreground font-bold text-xs shadow-md transition-all cursor-pointer inline-flex items-center gap-2"
             >
               <RefreshCw className="w-4 h-4" />

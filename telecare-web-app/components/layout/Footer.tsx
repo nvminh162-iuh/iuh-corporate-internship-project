@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Phone, ShieldCheck, Headphones } from "lucide-react";
+import { Mail, ShieldCheck, Headphones } from "lucide-react";
 
 export default function Footer() {
   return (

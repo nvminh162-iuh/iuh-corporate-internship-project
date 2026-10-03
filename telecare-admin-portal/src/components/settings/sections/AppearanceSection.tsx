@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme } from "@/components/theme/ThemeProvider";
+import { useTheme } from "@/components/theme/theme-context";
 
 export default function AppearanceSection() {
   const { theme, setTheme } = useTheme();

@@ -46,11 +46,14 @@ export function PlansCatalogContent() {
   const billingCycleParam = (searchParams.get("billingCycle") || "") as BillingCycle | "";
   const sortParam = searchParams.get("sort") || "displayOrder,asc";
   const pageParam = Number(searchParams.get("page") || "1");
+  const queryKey = `${keywordParam}:${categoryCodeParam}:${minPriceParam ?? ""}:${maxPriceParam ?? ""}:${billingCycleParam}:${pageParam}:${sortParam}`;
 
   // Data state
   const [categories, setCategories] = useState<PublicCategory[]>([]);
   const [pageData, setPageData] = useState<PageResponse<PublicPlanSummary> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadedQueryKey, setLoadedQueryKey] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // Selected plan for subscription dialog
@@ -94,12 +97,10 @@ export function PlansCatalogContent() {
   );
 
   // Fetch package catalog data whenever URL params change
-  const fetchPlans = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await publicPlanService.getPublicPlans({
+  useEffect(() => {
+    let isMounted = true;
+    publicPlanService
+      .getPublicPlans({
         keyword: keywordParam,
         categoryCode: categoryCodeParam,
         minPrice: minPriceParam,
@@ -108,27 +109,25 @@ export function PlansCatalogContent() {
         page: pageParam,
         size: 9,
         sort: sortParam,
+      })
+      .then((data) => {
+        if (!isMounted) return;
+        setPageData(data);
+        setError(null);
+        setLoadedQueryKey(queryKey);
+      })
+      .catch((err: unknown) => {
+        if (!isMounted) return;
+        setError(getApiErrorMessage(err, "Không thể tải danh sách gói cước. Vui lòng thử lại sau."));
+        setLoadedQueryKey(queryKey);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
       });
-
-      setPageData(data);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể tải danh sách gói cước. Vui lòng thử lại sau."));
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    keywordParam,
-    categoryCodeParam,
-    minPriceParam,
-    maxPriceParam,
-    billingCycleParam,
-    pageParam,
-    sortParam,
-  ]);
-
-  useEffect(() => {
-    fetchPlans();
-  }, [fetchPlans]);
+    return () => {
+      isMounted = false;
+    };
+  }, [keywordParam, categoryCodeParam, minPriceParam, maxPriceParam, billingCycleParam, pageParam, sortParam, queryKey, retryCount]);
 
   // Handlers
   const handleKeywordChange = (val: string) => {
@@ -192,6 +191,7 @@ export function PlansCatalogContent() {
 
         {/* Toolbar & Filters */}
         <PlanToolbar
+          key={`${keywordParam}:${categoryCodeParam}:${minPriceParam ?? ""}:${maxPriceParam ?? ""}:${billingCycleParam}:${sortParam}`}
           categories={categories}
           keyword={keywordParam}
           categoryCode={categoryCodeParam}
@@ -208,7 +208,7 @@ export function PlansCatalogContent() {
         />
 
         {/* Catalog Content Grid */}
-        {loading ? (
+        {loading || loadedQueryKey !== queryKey ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((idx) => (
               <PlanCardSkeleton key={idx} />
@@ -221,7 +221,11 @@ export function PlansCatalogContent() {
             <p className="text-xs text-muted-foreground">{error}</p>
             <button
               type="button"
-              onClick={fetchPlans}
+              onClick={() => {
+                setLoading(true);
+                setLoadedQueryKey("");
+                setRetryCount((count) => count + 1);
+              }}
               className="h-10 px-6 rounded-2xl bg-destructive text-destructive-foreground font-bold text-xs shadow-md transition-all cursor-pointer inline-flex items-center gap-2"
             >
               <RefreshCw className="w-4 h-4" />

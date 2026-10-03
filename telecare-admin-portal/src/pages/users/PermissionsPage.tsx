@@ -27,7 +27,6 @@ export default function PermissionsPage() {
   const [loadingDetails, setLoadingDetails] = useState(false);
 
   const fetchPermissions = useCallback(async () => {
-    setLoading(true);
     try {
       const data = await getAdminPermissions(page, size);
       setPermissions(data.result || []);
@@ -41,8 +40,22 @@ export default function PermissionsPage() {
   }, [page, size]);
 
   useEffect(() => {
-    fetchPermissions();
-  }, [fetchPermissions]);
+    let active = true;
+    getAdminPermissions(page, size)
+      .then((data) => {
+        if (!active) return;
+        setPermissions(data.result || []);
+        setTotalPages(data.totalPages || 1);
+        setTotalElements(data.totalElements || (data.result?.length ?? 0));
+      })
+      .catch((error) => {
+        if (active) toast.error(getApiErrorMessage(error, "Không thể tải danh sách quyền hạn."));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [page, size]);
 
   const openDetails = async (permission: AdminPermission, editing: boolean) => {
     setSelectedPermission(permission);
@@ -84,7 +97,10 @@ export default function PermissionsPage() {
         onSearchChange={setSearchQuery}
         placeholder="Tìm theo mã hoặc mô tả quyền..."
         loading={loading}
-        onRefresh={fetchPermissions}
+        onRefresh={() => {
+          setLoading(true);
+          void fetchPermissions();
+        }}
       />
 
       <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-2xs">
@@ -103,8 +119,12 @@ export default function PermissionsPage() {
           totalElements={totalElements}
           loading={loading}
           itemLabel="quyền hạn"
-          onPageChange={setPage}
+          onPageChange={(nextPage) => {
+            setLoading(true);
+            setPage(nextPage);
+          }}
           onSizeChange={(nextSize) => {
+            setLoading(true);
             setSize(nextSize);
             setPage(1);
           }}
