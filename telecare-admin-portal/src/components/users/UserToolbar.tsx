@@ -14,6 +14,7 @@ interface UserToolbarProps {
   loading: boolean;
   onRefresh: () => void;
   onOpenCreateModal: () => void;
+  canCreate?: boolean;
 }
 
 export default function UserToolbar({
@@ -26,6 +27,7 @@ export default function UserToolbar({
   loading,
   onRefresh,
   onOpenCreateModal,
+  canCreate = true,
 }: UserToolbarProps) {
   return (
     <div className="bg-card rounded-2xl border border-border p-4 flex flex-col md:flex-row items-center justify-between gap-3 shadow-2xs">
@@ -79,15 +81,17 @@ export default function UserToolbar({
         </Button>
 
         {/* Create User Button */}
-        <Button
-          variant="default"
-          size="default"
-          onClick={onOpenCreateModal}
-          className="h-10 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold gap-1.5 shadow-md shadow-primary/20 cursor-pointer"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Tạo người dùng</span>
-        </Button>
+        {canCreate && (
+          <Button
+            variant="default"
+            size="default"
+            onClick={onOpenCreateModal}
+            className="h-10 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold gap-1.5 shadow-md shadow-primary/20 cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Tạo người dùng</span>
+          </Button>
+        )}
       </div>
     </div>
   );

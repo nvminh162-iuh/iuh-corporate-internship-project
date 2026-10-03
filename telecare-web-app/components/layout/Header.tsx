@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useAuth } from "@/features/auth/useAuth";
 import { Button } from "@/components/ui/button";
 import UserDropdown from "./UserDropdown";
-import { Menu, X, Smartphone, HelpCircle } from "lucide-react";
+import NotificationDropdown from "./NotificationDropdown";
+import { Menu, X, Smartphone, HelpCircle, Ticket } from "lucide-react";
 
 export default function Header() {
   const { authenticated, login, register, logout, username, avatarUrl } =
@@ -72,7 +73,15 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-3 shrink-0">
             {authenticated ? (
               /* State 1: Authenticated User */
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Link
+                  href="/support/requests"
+                  className="h-10 flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors px-3 rounded-full hover:bg-muted"
+                >
+                  <Ticket className="w-4 h-4 text-primary" />
+                  <span>Yêu cầu của tôi</span>
+                </Link>
+
                 <Link
                   href="/support/new"
                   className="h-10 flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors px-3 rounded-full hover:bg-muted"
@@ -80,6 +89,9 @@ export default function Header() {
                   <HelpCircle className="w-4 h-4 text-primary" />
                   <span>Gửi hỗ trợ</span>
                 </Link>
+
+                {/* Notification Bell */}
+                <NotificationDropdown />
 
                 {/* User Dropdown */}
                 <UserDropdown />
@@ -132,6 +144,7 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-2">
+            {authenticated && <NotificationDropdown />}
             {authenticated && <UserDropdown />}
             <button
               type="button"
@@ -149,40 +162,61 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Drawer Menu (Guest actions only when not logged in) */}
+      {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-border bg-card/95 backdrop-blur-xl px-4 pt-3 pb-6 space-y-4 animate-in slide-in-from-top-2 duration-200 shadow-xl">
           {authenticated ? (
-            <div className="flex items-center justify-between px-1 pt-1">
-              <Link
-                href="/settings"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2.5 text-sm font-semibold text-foreground hover:text-primary transition-colors"
-              >
-                {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={avatarUrl}
-                    alt={username || "Đang tải"}
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-xs">
-                    {(username || "U").charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span>{username || "Cài đặt tài khoản"}</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  logout();
-                }}
-                className="text-xs font-semibold text-red-500 hover:text-red-600 flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-              >
-                <span>Đăng xuất</span>
-              </button>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1 pt-1">
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 text-sm font-semibold text-foreground hover:text-primary transition-colors"
+                >
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={avatarUrl}
+                      alt={username || "Đang tải"}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-xs">
+                      {(username || "U").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span>{username || "Cài đặt tài khoản"}</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="text-xs font-semibold text-red-500 hover:text-red-600 flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                >
+                  <span>Đăng xuất</span>
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-1.5 pt-2 border-t border-border">
+                <Link
+                  href="/support/requests"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-foreground hover:bg-muted flex items-center gap-3 transition-colors"
+                >
+                  <Ticket className="w-4 h-4 text-primary" />
+                  <span>Yêu cầu của tôi</span>
+                </Link>
+                <Link
+                  href="/support/new"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-foreground hover:bg-muted flex items-center gap-3 transition-colors"
+                >
+                  <HelpCircle className="w-4 h-4 text-primary" />
+                  <span>Gửi hỗ trợ</span>
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-3 pt-1">

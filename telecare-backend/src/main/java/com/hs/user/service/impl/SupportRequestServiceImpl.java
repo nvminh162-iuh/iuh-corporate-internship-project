@@ -24,6 +24,7 @@ import com.hs.user.repository.ServicePlanRepository;
 import com.hs.user.repository.SupportCategoryRepository;
 import com.hs.user.repository.SupportRequestHistoryRepository;
 import com.hs.user.repository.SupportRequestRepository;
+import com.hs.user.repository.specification.SupportRequestSpecification;
 import com.hs.user.service.SupportRequestService;
 
 import lombok.AccessLevel;
@@ -110,14 +111,84 @@ public class SupportRequestServiceImpl implements SupportRequestService {
         return SupportRequestMapper.mapToSupportRequestResponse(savedRequest);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<com.hs.user.dto.response.CustomerSupportRequestSummaryResponse> findMySupportRequests(
+            String customerId,
+            com.hs.user.dto.request.CustomerSupportRequestQuery query,
+            org.springframework.data.domain.Pageable pageable
+    ) {
+        if (customerId == null || customerId.isBlank()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        if (query != null && query.getFromDate() != null && query.getToDate() != null
+                && query.getFromDate().isAfter(query.getToDate())) {
+            throw new AppException(ErrorCode.INVALID_DATE_RANGE);
+        }
+
+        int pageSize = Math.min(Math.max(pageable.getPageSize(), 1), 100);
+        int pageNumber = Math.max(pageable.getPageNumber(), 0);
+        org.springframework.data.domain.Sort sort = pageable.getSort().isSorted()
+                ? pageable.getSort().and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))
+                : org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")
+                        .and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+        org.springframework.data.domain.Pageable safePageable = org.springframework.data.domain.PageRequest.of(pageNumber, pageSize, sort);
+
+        org.springframework.data.domain.Page<SupportRequest> page = supportRequestRepository.findAll(
+                SupportRequestSpecification.filterCustomerRequests(customerId, query),
+                safePageable
+        );
+
+        return page.map(SupportRequestMapper::mapToCustomerSummaryResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.hs.user.dto.response.CustomerSupportRequestDetailResponse findMySupportRequestDetail(String customerId, String id) {
+        if (customerId == null || customerId.isBlank()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        SupportRequest request = supportRequestRepository.findByIdAndCustomerId(id, customerId)
+                .orElseThrow(() -> new AppException(ErrorCode.SUPPORT_REQUEST_NOT_EXISTED));
+
+        return SupportRequestMapper.mapToCustomerDetailResponse(request);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.hs.user.dto.response.CustomerSupportRequestHistoryResponse> findMySupportRequestHistories(String customerId, String id) {
+        if (customerId == null || customerId.isBlank()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        // Verify ticket ownership first - throws 404 if not found or not owned
+        supportRequestRepository.findByIdAndCustomerId(id, customerId)
+                .orElseThrow(() -> new AppException(ErrorCode.SUPPORT_REQUEST_NOT_EXISTED));
+
+        List<SupportRequestHistory> histories = supportRequestHistoryRepository.findBySupportRequestIdOrderByCreatedAtAsc(id);
+
+        return histories.stream()
+                .filter(h -> h.getAction() == SupportRequestHistoryAction.CREATED || h.getAction() == SupportRequestHistoryAction.STATUS_CHANGED)
+                .map(SupportRequestMapper::mapToCustomerHistoryResponse)
+                .toList();
+    }
+
     private synchronized String generateTicketCode() {
-        String datePrefix = LocalDate.now().format(DATE_FORMATTER);
+        String datePrefix = LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).format(DATE_FORMATTER);
         long seqValue;
 
         try {
             Long nextSeq = supportRequestRepository.getNextTicketSequence();
-            seqValue = (nextSeq != null && nextSeq > 0) ? nextSeq : fallbackSequence.getAndIncrement();
+            if (nextSeq != null && nextSeq > 0) {
+                seqValue = nextSeq;
+            } else {
+                log.warn("Database sequence support_request_ticket_seq returned non-positive value: {}, using synchronized fallback", nextSeq);
+                seqValue = fallbackSequence.getAndIncrement();
+            }
         } catch (Exception e) {
+            log.warn("Could not query database sequence support_request_ticket_seq (error: {}), using synchronized fallback sequence", e.getMessage());
             seqValue = fallbackSequence.getAndIncrement();
         }
 

@@ -19,6 +19,7 @@ import com.hs.user.dto.request.UpdateAvatarRequest;
 import com.hs.user.dto.request.UpdatePasswordRequest;
 import com.hs.user.dto.request.UpdateProfileRequest;
 import com.hs.user.dto.response.UserProfileResponse;
+import com.hs.user.dto.response.UserPermissionsResponse;
 import com.hs.user.service.UserService;
 
 import jakarta.validation.Valid;
@@ -102,6 +103,13 @@ public class UserController {
         userService.verifyCurrentUserEmail();
         return ApiResponse.<Void>builder()
                 .message("Email verified successfully")
+                .build();
+    }
+
+    @GetMapping("/me/permissions")
+    public ApiResponse<UserPermissionsResponse> getMyPermissions() {
+        return ApiResponse.<UserPermissionsResponse>builder()
+                .result(userService.getMyPermissions())
                 .build();
     }
 }

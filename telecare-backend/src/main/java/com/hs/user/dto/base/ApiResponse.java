@@ -22,4 +22,8 @@ public class ApiResponse<T> {
     int code = 1000;
     String message;
     T result;
+    Object details;
+    java.time.Instant timestamp;
+    String path;
+    String traceId;
 }

@@ -17,10 +17,13 @@ import UserPagination from "@/components/users/UserPagination";
 import CreateUserModal from "@/components/users/CreateUserModal";
 import UserDetailsModal from "@/components/users/UserDetailsModal";
 import { getApiErrorMessage } from "@/utils/userUtils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function UsersPage() {
   const { profile } = useAuth();
   const currentUserId = profile?.id;
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission("USER_CREATE");
 
   // List & Pagination State
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -63,7 +66,10 @@ export default function UsersPage() {
   }, [page, size]);
 
   useEffect(() => {
-    fetchUsers();
+    const timer = setTimeout(() => {
+      fetchUsers();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchUsers]);
 
   // Open Details Modal
@@ -208,6 +214,7 @@ export default function UsersPage() {
         loading={loading}
         onRefresh={fetchUsers}
         onOpenCreateModal={() => setIsCreateModalOpen(true)}
+        canCreate={canCreate}
       />
 
       {/* 3. Data Table & Pagination */}

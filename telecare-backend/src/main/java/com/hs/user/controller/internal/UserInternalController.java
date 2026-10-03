@@ -22,6 +22,7 @@ public class UserInternalController {
     UserService userService;
 
     @GetMapping("/{userId}/permissions")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('INTERNAL_SERVICE')")
     public ApiResponse<UserPermissionsResponse> getUserPermissions(@PathVariable String userId) {
         return ApiResponse.<UserPermissionsResponse>builder()
                 .result(userService.getUserPermissions(userId))

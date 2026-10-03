@@ -200,6 +200,12 @@ public class UserServiceImpl implements UserService {
         }
 
         @Override
+        public UserPermissionsResponse getMyPermissions() {
+                User user = currentUserUtils.getCurrentUser();
+                return getUserPermissions(user.getId());
+        }
+
+        @Override
         public void updateUserPassword(UpdatePasswordRequest request) {
                 User user = currentUserUtils.getCurrentUser();
                 keycloakUserService.updatePassword(user.getId(), user.getUsername(), request);

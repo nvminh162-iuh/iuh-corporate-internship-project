@@ -55,6 +55,7 @@ class SupportRequestCustomerControllerTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         mockMvc = MockMvcBuilders.standaloneSetup(supportRequestCustomerController, supportCategoryPublicController)
+                .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .addFilters(new UserContextFilter())
                 .setControllerAdvice(new GlobalException())
                 .build();
@@ -160,5 +161,92 @@ class SupportRequestCustomerControllerTest {
                         .header("X-User-Id", "cust-token-sub"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(1601));
+    }
+
+    @Test
+    @DisplayName("GET /support-requests/me returns 200 OK with customer's tickets")
+    void findMySupportRequests_ReturnsOk() throws Exception {
+        com.hs.user.dto.response.CustomerSupportRequestSummaryResponse summary = com.hs.user.dto.response.CustomerSupportRequestSummaryResponse.builder()
+                .id("sr-1")
+                .ticketCode("SR-20261003-00001")
+                .subject("Cần hỗ trợ về đường truyền cáp quang")
+                .categoryCode("TECH_SUPPORT")
+                .categoryName("Hỗ trợ kỹ thuật")
+                .status(SupportRequestStatus.NEW)
+                .build();
+
+        org.springframework.data.domain.Page<com.hs.user.dto.response.CustomerSupportRequestSummaryResponse> page =
+                new org.springframework.data.domain.PageImpl<>(List.of(summary), org.springframework.data.domain.PageRequest.of(0, 10), 1);
+
+        when(supportRequestService.findMySupportRequests(eq("cust-1"), any(), any()))
+                .thenReturn(page);
+
+        mockMvc.perform(get("/support-requests/me")
+                        .header("X-User-Id", "cust-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.result[0].ticketCode").value("SR-20261003-00001"))
+                .andExpect(jsonPath("$.result.result[0].categoryCode").value("TECH_SUPPORT"));
+    }
+
+    @Test
+    @DisplayName("GET /support-requests/me/{id} returns 200 OK when customer owns ticket")
+    void findMySupportRequestDetail_Owned_ReturnsOk() throws Exception {
+        com.hs.user.dto.response.CustomerSupportRequestDetailResponse detail = com.hs.user.dto.response.CustomerSupportRequestDetailResponse.builder()
+                .id("sr-1")
+                .ticketCode("SR-20261003-00001")
+                .subject("Cần hỗ trợ về đường truyền cáp quang")
+                .content("Mô tả chi tiết sự cố mạng tại nhà...")
+                .status(SupportRequestStatus.IN_PROGRESS)
+                .categoryCode("TECH_SUPPORT")
+                .build();
+
+        when(supportRequestService.findMySupportRequestDetail("cust-1", "sr-1"))
+                .thenReturn(detail);
+
+        mockMvc.perform(get("/support-requests/me/sr-1")
+                        .header("X-User-Id", "cust-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.ticketCode").value("SR-20261003-00001"))
+                .andExpect(jsonPath("$.result.status").value("IN_PROGRESS"));
+    }
+
+    @Test
+    @DisplayName("GET /support-requests/me/{id} returns 404 NOT_FOUND for anti-enumeration when ticket belongs to another customer")
+    void findMySupportRequestDetail_NonOwned_ReturnsNotFound() throws Exception {
+        when(supportRequestService.findMySupportRequestDetail("cust-1", "sr-other"))
+                .thenThrow(new AppException(ErrorCode.SUPPORT_REQUEST_NOT_EXISTED));
+
+        mockMvc.perform(get("/support-requests/me/sr-other")
+                        .header("X-User-Id", "cust-1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(1602));
+    }
+
+    @Test
+    @DisplayName("GET /support-requests/me/{id}/histories returns 200 OK with customer-safe timeline")
+    void findMySupportRequestHistories_ReturnsOk() throws Exception {
+        com.hs.user.dto.response.CustomerSupportRequestHistoryResponse history = com.hs.user.dto.response.CustomerSupportRequestHistoryResponse.builder()
+                .id("hist-1")
+                .action(com.hs.user.model.constant.SupportRequestHistoryAction.STATUS_CHANGED)
+                .fromStatus(null)
+                .toStatus(SupportRequestStatus.NEW)
+                .build();
+
+        when(supportRequestService.findMySupportRequestHistories("cust-1", "sr-1"))
+                .thenReturn(List.of(history));
+
+        mockMvc.perform(get("/support-requests/me/sr-1/histories")
+                        .header("X-User-Id", "cust-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result[0].action").value("STATUS_CHANGED"))
+                .andExpect(jsonPath("$.result[0].toStatus").value("NEW"));
+    }
+
+    @Test
+    @DisplayName("GET /support-requests/me returns 401 UNAUTHENTICATED when unauthenticated")
+    void findMySupportRequests_Unauthenticated_ReturnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/support-requests/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(1002));
     }
 }

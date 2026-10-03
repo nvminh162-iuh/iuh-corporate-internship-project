@@ -147,4 +147,80 @@ public class SupportRequestMapper {
                 .roleName(user.getRole() != null ? user.getRole().getName() : null)
                 .build();
     }
+
+    public static com.hs.user.dto.response.CustomerSupportRequestSummaryResponse mapToCustomerSummaryResponse(SupportRequest request) {
+        if (request == null) {
+            return null;
+        }
+        return com.hs.user.dto.response.CustomerSupportRequestSummaryResponse.builder()
+                .id(request.getId())
+                .ticketCode(request.getTicketCode())
+                .categoryCode(request.getCategory() != null ? request.getCategory().getCode() : null)
+                .categoryName(request.getCategory() != null ? request.getCategory().getName() : null)
+                .subject(request.getSubject())
+                .status(request.getStatus())
+                .servicePlanName(request.getServicePlan() != null ? request.getServicePlan().getName() : null)
+                .createdAt(request.getCreatedAt())
+                .completedAt(request.getCompletedAt())
+                .closedAt(request.getClosedAt())
+                .build();
+    }
+
+    public static com.hs.user.dto.response.CustomerSupportRequestDetailResponse mapToCustomerDetailResponse(SupportRequest request) {
+        if (request == null) {
+            return null;
+        }
+        return com.hs.user.dto.response.CustomerSupportRequestDetailResponse.builder()
+                .id(request.getId())
+                .ticketCode(request.getTicketCode())
+                .categoryCode(request.getCategory() != null ? request.getCategory().getCode() : null)
+                .categoryName(request.getCategory() != null ? request.getCategory().getName() : null)
+                .servicePlanCode(request.getServicePlan() != null ? request.getServicePlan().getCode() : null)
+                .servicePlanName(request.getServicePlan() != null ? request.getServicePlan().getName() : null)
+                .subject(request.getSubject())
+                .content(request.getContent())
+                .contactPhone(request.getContactPhone())
+                .contactEmail(request.getContactEmail())
+                .status(request.getStatus())
+                .resolution(request.getResolution())
+                .receivedAt(request.getReceivedAt())
+                .completedAt(request.getCompletedAt())
+                .closedAt(request.getClosedAt())
+                .createdAt(request.getCreatedAt())
+                .updatedAt(request.getUpdatedAt())
+                .build();
+    }
+
+    public static com.hs.user.dto.response.CustomerSupportRequestHistoryResponse mapToCustomerHistoryResponse(SupportRequestHistory history) {
+        if (history == null) {
+            return null;
+        }
+        String safeMessage;
+        if (history.getAction() == com.hs.user.model.constant.SupportRequestHistoryAction.CREATED) {
+            safeMessage = "Yêu cầu hỗ trợ đã được tạo thành công";
+        } else if (history.getToStatus() == com.hs.user.model.constant.SupportRequestStatus.WAITING_CUSTOMER) {
+            safeMessage = history.getNote() != null ? history.getNote() : "Yêu cầu bổ sung thông tin từ khách hàng";
+        } else if (history.getToStatus() == com.hs.user.model.constant.SupportRequestStatus.COMPLETED) {
+            safeMessage = (history.getSupportRequest() != null && history.getSupportRequest().getResolution() != null)
+                    ? history.getSupportRequest().getResolution()
+                    : (history.getNote() != null ? history.getNote() : "Yêu cầu hỗ trợ đã xử lý hoàn tất");
+        } else if (history.getToStatus() == com.hs.user.model.constant.SupportRequestStatus.RECEIVED) {
+            safeMessage = "Yêu cầu đã được tiếp nhận";
+        } else if (history.getToStatus() == com.hs.user.model.constant.SupportRequestStatus.IN_PROGRESS) {
+            safeMessage = "Yêu cầu đang được nhân viên kỹ thuật xử lý";
+        } else if (history.getToStatus() == com.hs.user.model.constant.SupportRequestStatus.CLOSED) {
+            safeMessage = "Yêu cầu hỗ trợ đã được đóng";
+        } else {
+            safeMessage = history.getNote() != null ? history.getNote() : "Cập nhật trạng thái yêu cầu hỗ trợ";
+        }
+
+        return com.hs.user.dto.response.CustomerSupportRequestHistoryResponse.builder()
+                .id(history.getId())
+                .action(history.getAction())
+                .fromStatus(history.getFromStatus())
+                .toStatus(history.getToStatus())
+                .message(safeMessage)
+                .createdAt(history.getCreatedAt())
+                .build();
+    }
 }

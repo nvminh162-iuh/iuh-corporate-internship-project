@@ -33,6 +33,7 @@ import type {
   SupportRequestStatus,
   UserSummaryInfo,
 } from "@/types/support-admin.type";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const STATUS_CONFIG: Record<
   SupportRequestStatus,
@@ -100,6 +101,10 @@ export default function SupportRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  const { hasPermission } = usePermissions();
+  const canAssign = hasPermission("SUPPORT_REQUEST_ASSIGN");
+  const canProcess = hasPermission("SUPPORT_REQUEST_PROCESS");
+
   const [ticket, setTicket] = useState<SupportRequestAdminDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [staffUsers, setStaffUsers] = useState<SupportRequestAssignee[]>([]);
@@ -158,8 +163,10 @@ export default function SupportRequestDetailPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDetail();
-    fetchStaff();
-  }, [fetchDetail, fetchStaff]);
+    if (canAssign) {
+      fetchStaff();
+    }
+  }, [fetchDetail, fetchStaff, canAssign]);
 
   if (loading) {
     return (
@@ -328,7 +335,7 @@ export default function SupportRequestDetailPage() {
         {!isClosed && (
           <div className="flex flex-wrap items-center gap-2">
             {/* NEW: Chỉ tiếp nhận */}
-            {ticket.status === "NEW" && (
+            {canProcess && ticket.status === "NEW" && (
               <Button
                 variant="outline"
                 size="sm"
@@ -342,26 +349,27 @@ export default function SupportRequestDetailPage() {
             )}
 
             {/* Phân công: RECEIVED, IN_PROGRESS, WAITING_CUSTOMER */}
-            {(ticket.status === "RECEIVED" ||
-              ticket.status === "IN_PROGRESS" ||
-              ticket.status === "WAITING_CUSTOMER") && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setAssignStaffId(ticket.assignedToId || ticket.assignedTo?.id || "");
-                  setIsAssignModalOpen(true);
-                }}
-                disabled={actionLoading}
-                className="gap-1.5"
-              >
-                <UserCheck className="w-4 h-4" />
-                {ticket.assignedTo || ticket.assignedToName ? "Phân công lại" : "Phân công"}
-              </Button>
-            )}
+            {canAssign &&
+              (ticket.status === "RECEIVED" ||
+                ticket.status === "IN_PROGRESS" ||
+                ticket.status === "WAITING_CUSTOMER") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setAssignStaffId(ticket.assignedToId || ticket.assignedTo?.id || "");
+                    setIsAssignModalOpen(true);
+                  }}
+                  disabled={actionLoading}
+                  className="gap-1.5"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  {ticket.assignedTo || ticket.assignedToName ? "Phân công lại" : "Phân công"}
+                </Button>
+              )}
 
             {/* Cập nhật trạng thái theo ma trận */}
-            {ALLOWED_TARGET_STATUSES[ticket.status]?.length > 0 && (
+            {canProcess && ALLOWED_TARGET_STATUSES[ticket.status]?.length > 0 && (
               <Button
                 variant="default"
                 size="sm"
@@ -381,21 +389,22 @@ export default function SupportRequestDetailPage() {
             )}
 
             {/* Thêm nội dung xử lý: cho phép khi thuộc RECEIVED, IN_PROGRESS, WAITING_CUSTOMER, COMPLETED */}
-            {(ticket.status === "RECEIVED" ||
-              ticket.status === "IN_PROGRESS" ||
-              ticket.status === "WAITING_CUSTOMER" ||
-              ticket.status === "COMPLETED") && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsHistoryModalOpen(true)}
-                disabled={actionLoading}
-                className="gap-1.5"
-              >
-                <MessageSquare className="w-4 h-4" />
-                Thêm nội dung xử lý
-              </Button>
-            )}
+            {canProcess &&
+              (ticket.status === "RECEIVED" ||
+                ticket.status === "IN_PROGRESS" ||
+                ticket.status === "WAITING_CUSTOMER" ||
+                ticket.status === "COMPLETED") && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsHistoryModalOpen(true)}
+                  disabled={actionLoading}
+                  className="gap-1.5"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Thêm nội dung xử lý
+                </Button>
+              )}
           </div>
         )}
       </div>

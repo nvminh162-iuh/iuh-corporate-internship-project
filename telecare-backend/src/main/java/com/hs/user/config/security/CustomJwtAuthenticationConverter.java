@@ -32,34 +32,45 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
         Set<GrantedAuthority> authorities = new HashSet<>();
 
         // 1. Resolve Role and Permissions directly from local PostgreSQL database
+        boolean userFoundInDb = false;
         try {
-            userRepository.findById(userId).ifPresent(user -> {
-                if (user.getRole() != null && Boolean.TRUE.equals(user.getRole().getActive())) {
-                    String roleName = normalizeRole(user.getRole().getName());
-                    if (!roleName.isBlank()) {
-                        authorities.add(new SimpleGrantedAuthority(roleName));
-                        authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName));
+            var userOpt = userRepository.findById(userId);
+            if (userOpt.isPresent()) {
+                userFoundInDb = true;
+                var user = userOpt.get();
+                // If local user is inactive, do not grant any application authorities (fail-closed)
+                if (Boolean.TRUE.equals(user.getActive())) {
+                    if (user.getRole() != null && Boolean.TRUE.equals(user.getRole().getActive())) {
+                        String roleName = normalizeRole(user.getRole().getName());
+                        if (!roleName.isBlank()) {
+                            authorities.add(new SimpleGrantedAuthority(roleName));
+                            authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName));
+                        }
+                        if (user.getRole().getPermissions() != null) {
+                            user.getRole().getPermissions().stream()
+                                    .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                                    .map(p -> new SimpleGrantedAuthority(p.getName()))
+                                    .forEach(authorities::add);
+                        }
                     }
-                    if (user.getRole().getPermissions() != null) {
-                        user.getRole().getPermissions().stream()
-                                .filter(p -> Boolean.TRUE.equals(p.getActive()))
-                                .map(p -> new SimpleGrantedAuthority(p.getName()))
-                                .forEach(authorities::add);
-                    }
+                } else {
+                    log.warn("User {} is disabled in local database, granting no authorities", userId);
                 }
-            });
+            }
         } catch (Exception e) {
             log.warn("Could not load user permissions from database for userId {}: {}", userId, e.getMessage());
         }
 
-        // 2. Extract roles from Keycloak JWT claims (realm_access & resource_access) as fallback
-        extractKeycloakRoles(jwt).forEach(role -> {
-            String normalized = normalizeRole(role);
-            if (!normalized.isBlank()) {
-                authorities.add(new SimpleGrantedAuthority(normalized));
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + normalized));
-            }
-        });
+        // 2. Extract roles from Keycloak JWT claims as fallback only if user is NOT in local database
+        if (!userFoundInDb) {
+            extractKeycloakRoles(jwt).forEach(role -> {
+                String normalized = normalizeRole(role);
+                if (!normalized.isBlank()) {
+                    authorities.add(new SimpleGrantedAuthority(normalized));
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + normalized));
+                }
+            });
+        }
 
         String principalClaimValue = jwt.getClaimAsString("preferred_username");
         if (principalClaimValue == null || principalClaimValue.isBlank()) {

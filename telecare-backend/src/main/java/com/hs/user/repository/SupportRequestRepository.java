@@ -14,6 +14,8 @@ public interface SupportRequestRepository extends JpaRepository<SupportRequest, 
 
     Optional<SupportRequest> findByTicketCode(String ticketCode);
 
+    Optional<SupportRequest> findByIdAndCustomerId(String id, String customerId);
+
     boolean existsByTicketCode(String ticketCode);
 
     @Query(value = "SELECT nextval('support_request_ticket_seq')", nativeQuery = true)

@@ -80,6 +80,13 @@ const userService = {
       request,
     );
   },
+
+  async getMyPermissions(): Promise<import("@/types/permission.type").UserPermissions> {
+    const response = await axiosClient.get<ApiResponse<import("@/types/permission.type").UserPermissions>>(
+      "/api/v1/users/me/permissions",
+    );
+    return response.data.result;
+  },
 };
 
 export default userService;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,6 +13,7 @@ import {
   Boxes,
   LifeBuoy,
 } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -23,7 +24,8 @@ interface MenuItem {
   title: string;
   path?: string;
   icon: React.ElementType;
-  children?: { title: string; path: string; icon?: React.ElementType }[];
+  permission?: string;
+  children?: { title: string; path: string; icon?: React.ElementType; permission?: string }[];
 }
 
 const MENU_ITEMS: MenuItem[] = [
@@ -36,23 +38,24 @@ const MENU_ITEMS: MenuItem[] = [
     title: "Quản lý tài khoản",
     icon: Users,
     children: [
-      { title: "Người dùng hệ thống", path: "/users", icon: UserCheck },
-      { title: "Vai trò", path: "/users/roles", icon: ShieldCheck },
-      { title: "Quyền hạn", path: "/users/permissions", icon: KeyRound },
+      { title: "Người dùng hệ thống", path: "/users", icon: UserCheck, permission: "USER_VIEW" },
+      { title: "Vai trò", path: "/users/roles", icon: ShieldCheck, permission: "ROLE_VIEW" },
+      { title: "Quyền hạn", path: "/users/permissions", icon: KeyRound, permission: "PERMISSION_VIEW" },
     ],
   },
   {
     title: "Quản lý dịch vụ",
     icon: Boxes,
     children: [
-      { title: "Gói cước", path: "/plans", icon: Package },
-      { title: "Nhóm dịch vụ", path: "/plans/categories", icon: FolderTree },
+      { title: "Gói cước", path: "/plans", icon: Package, permission: "PLAN_VIEW" },
+      { title: "Nhóm dịch vụ", path: "/plans/categories", icon: FolderTree, permission: "CATEGORY_VIEW" },
     ],
   },
   {
     title: "Yêu cầu hỗ trợ",
     path: "/admin/support-requests",
     icon: LifeBuoy,
+    permission: "SUPPORT_REQUEST_VIEW",
   },
   {
     title: "Cài đặt",
@@ -63,6 +66,27 @@ const MENU_ITEMS: MenuItem[] = [
 
 export default function Sidebar({ collapsed }: SidebarProps) {
   const location = useLocation();
+  const { hasPermission } = usePermissions();
+
+  const visibleMenuItems = useMemo(() => {
+    return MENU_ITEMS.map((item) => {
+      if (item.children) {
+        const filteredChildren = item.children.filter(
+          (c) => !c.permission || hasPermission(c.permission),
+        );
+        return { ...item, children: filteredChildren };
+      }
+      return item;
+    }).filter((item) => {
+      if (item.permission && !hasPermission(item.permission)) {
+        return false;
+      }
+      if (item.children && item.children.length === 0) {
+        return false;
+      }
+      return true;
+    });
+  }, [hasPermission]);
 
   // Keep track of open submenu groups
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
@@ -105,7 +129,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
 
       {/* 2. Navigation Menu */}
       <div className="flex-1 overflow-y-auto p-3 space-y-1.5 no-scrollbar">
-        {MENU_ITEMS.map((item) => {
+        {visibleMenuItems.map((item) => {
           const Icon = item.icon;
 
           // Single menu item

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Package } from "lucide-react";
-import { useAuth } from "@/features/auth/useAuth";
 import {
   getAllAdminCategories,
   getAdminPlans,
@@ -20,10 +19,13 @@ import PlanDetailsModal from "@/components/plans/PlanDetailsModal";
 import DeletePlanDialog from "@/components/plans/DeletePlanDialog";
 import UserPagination from "@/components/users/UserPagination";
 import { getApiErrorMessage } from "@/utils/userUtils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function PlansPage() {
-  const { profile } = useAuth();
-  const isAdmin = profile?.role === "ADMIN" || true; // Admin portal default access
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission("PLAN_CREATE");
+  const canUpdate = hasPermission("PLAN_UPDATE");
+  const canDelete = hasPermission("PLAN_DELETE");
 
   // Categories list for dropdown
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
@@ -84,11 +86,17 @@ export default function PlansPage() {
   }, [page, size, searchQuery, selectedCategory, selectedStatus]);
 
   useEffect(() => {
-    fetchCategories();
+    const timer = setTimeout(() => {
+      fetchCategories();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchCategories]);
 
   useEffect(() => {
-    fetchPlans();
+    const timer = setTimeout(() => {
+      fetchPlans();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchPlans]);
 
   // Handle Quick Status Change
@@ -144,7 +152,7 @@ export default function PlansPage() {
           selectedStatus={selectedStatus}
           categories={categories}
           loading={loading}
-          canCreate={isAdmin}
+          canCreate={canCreate}
           onSearchChange={handleSearchChange}
           onCategoryChange={handleCategoryChange}
           onStatusChange={handleStatusChange}
@@ -161,8 +169,8 @@ export default function PlansPage() {
           loading={loading}
           page={page}
           size={size}
-          canUpdate={isAdmin}
-          canDelete={isAdmin}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
           onViewDetails={(plan) => {
             setSelectedPlanForDetails(plan);
             setIsDetailsOpen(true);
@@ -197,7 +205,7 @@ export default function PlansPage() {
       <PlanDetailsModal
         isOpen={isDetailsOpen}
         selectedPlan={selectedPlanForDetails}
-        canUpdate={isAdmin}
+        canUpdate={canUpdate}
         onClose={() => {
           setIsDetailsOpen(false);
           setSelectedPlanForDetails(null);

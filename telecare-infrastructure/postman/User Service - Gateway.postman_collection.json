@@ -186,11 +186,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/me/onboarding",
+              "raw": "{{baseUrl}}/api/v1/users/me/onboarding",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "onboarding"
@@ -237,11 +239,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/me/password",
+              "raw": "{{baseUrl}}/api/v1/users/me/password",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "password"
@@ -270,11 +274,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/me/password/status",
+              "raw": "{{baseUrl}}/api/v1/users/me/password/status",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "password",
@@ -305,11 +311,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/me/password/initial",
+              "raw": "{{baseUrl}}/api/v1/users/me/password/initial",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "password",
@@ -344,11 +352,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/me/profile",
+              "raw": "{{baseUrl}}/api/v1/users/me/profile",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "profile"
@@ -377,11 +387,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/me/profile",
+              "raw": "{{baseUrl}}/api/v1/users/me/profile",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "profile"
@@ -396,11 +408,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/me/address",
+              "raw": "{{baseUrl}}/api/v1/users/me/address",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "address"
@@ -430,11 +444,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/me/address",
+              "raw": "{{baseUrl}}/api/v1/users/me/address",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "address"
@@ -450,11 +466,13 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/me/address",
+              "raw": "{{baseUrl}}/api/v1/users/me/address",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "address"
@@ -484,17 +502,76 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/me/avatar",
+              "raw": "{{baseUrl}}/api/v1/users/me/avatar",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "users",
                 "me",
                 "avatar"
               ]
             },
             "description": "Updates avatarUrl in Keycloak attribute 'picture' and synchronizes it to the core database."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Permissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Contains roles and permissions arrays\", function () {",
+                  "    pm.expect(json.result).to.have.property(\"roles\");",
+                  "    pm.expect(json.result).to.have.property(\"permissions\");",
+                  "    pm.expect(Array.isArray(json.result.permissions)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "permissions"
+              ]
+            },
+            "description": "Get roles and active permissions of current authenticated user."
           },
           "response": []
         }
@@ -509,11 +586,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/addresses/me",
+              "raw": "{{baseUrl}}/api/v1/addresses/me",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "addresses",
                 "me"
               ]
@@ -542,11 +621,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/addresses/me",
+              "raw": "{{baseUrl}}/api/v1/addresses/me",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "addresses",
                 "me"
               ]
@@ -561,11 +642,13 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/addresses/me",
+              "raw": "{{baseUrl}}/api/v1/addresses/me",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "addresses",
                 "me"
               ]
@@ -616,11 +699,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/admin/users",
+              "raw": "{{baseUrl}}/api/v1/admin/users",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "users"
               ]
@@ -653,11 +738,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/users?page=0&size=10&sort=createdAt,desc",
+              "raw": "{{baseUrl}}/api/v1/admin/users?page=0&size=10&sort=createdAt,desc",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "users"
               ],
@@ -708,11 +795,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/users/{{userId}}",
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "users",
                 "{{userId}}"
@@ -758,11 +847,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/admin/users/{{userId}}",
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "users",
                 "{{userId}}"
@@ -778,11 +869,13 @@
             "method": "PATCH",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/users/{{userId}}/disable",
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}/disable",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "users",
                 "{{userId}}",
@@ -798,11 +891,13 @@
             "method": "PATCH",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/users/{{userId}}/enable",
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}/enable",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "users",
                 "{{userId}}",
@@ -818,11 +913,13 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/users/{{userId}}/resend-invitation",
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}/resend-invitation",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "users",
                 "{{userId}}",
@@ -859,11 +956,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/roles?page=0&size=10",
+              "raw": "{{baseUrl}}/api/v1/admin/roles?page=0&size=10",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "roles"
               ],
@@ -908,11 +1007,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/roles/all",
+              "raw": "{{baseUrl}}/api/v1/admin/roles/all",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "roles",
                 "all"
@@ -928,11 +1029,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/roles/{{roleId}}",
+              "raw": "{{baseUrl}}/api/v1/admin/roles/{{roleId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "roles",
                 "{{roleId}}"
@@ -961,11 +1064,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/admin/roles/{{roleId}}",
+              "raw": "{{baseUrl}}/api/v1/admin/roles/{{roleId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "roles",
                 "{{roleId}}"
@@ -1000,11 +1105,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/permissions?page=0&size=10",
+              "raw": "{{baseUrl}}/api/v1/admin/permissions?page=0&size=10",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "permissions"
               ],
@@ -1042,11 +1149,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/permissions/all",
+              "raw": "{{baseUrl}}/api/v1/admin/permissions/all",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "permissions",
                 "all"
@@ -1075,11 +1184,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/admin/permissions/{{permissionId}}",
+              "raw": "{{baseUrl}}/api/v1/admin/permissions/{{permissionId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "v1",
                 "admin",
                 "permissions",
                 "{{permissionId}}"
@@ -2010,6 +2121,885 @@
           }
         }
       ]
+    },
+    {
+      "name": "Customer - Support Requests",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('customerToken') && pm.collectionVariables.get('accessToken')) {",
+              "    pm.variables.set('customerToken', pm.collectionVariables.get('accessToken'));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "Get My Support Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns list of my support requests\", function () {",
+                  "    pm.expect(json).to.have.property(\"result\");",
+                  "    pm.expect(Array.isArray(json.result)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support-requests/me?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support-requests",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of support requests submitted by current customer."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Support Request Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Customer ticket details retrieved\", function () {",
+                  "    pm.expect(json.result).to.have.property(\"ticketCode\");",
+                  "    pm.expect(json.result).to.have.property(\"status\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support-requests/me/{{ticketId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support-requests",
+                "me",
+                "{{ticketId}}"
+              ]
+            },
+            "description": "Get detail of a specific support request owned by current customer."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Support Request Histories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns customer safe timeline histories\", function () {",
+                  "    pm.expect(json).to.have.property(\"result\");",
+                  "    pm.expect(Array.isArray(json.result)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support-requests/me/{{ticketId}}/histories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support-requests",
+                "me",
+                "{{ticketId}}",
+                "histories"
+              ]
+            },
+            "description": "Get customer-safe timeline history for a ticket."
+          },
+          "response": []
+        }
+      ],
+      "description": "Customer Support Request self-service APIs"
+    },
+    {
+      "name": "Notifications",
+      "description": "In-app notification endpoints for authenticated users",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('customerToken') && pm.collectionVariables.get('accessToken')) {",
+              "    pm.variables.set('customerToken', pm.collectionVariables.get('accessToken'));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (json.result && json.result.length > 0 && json.result[0].id) {",
+                  "    pm.collectionVariables.set(\"notificationId\", json.result[0].id);",
+                  "    console.log(\"Saved notificationId: \" + json.result[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications?page=0&size=10&unreadOnly=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "unreadOnly",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Get paginated notifications of the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Notification Count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Result contains unreadCount\", function () {",
+                  "    pm.expect(json.result).to.have.property(\"unreadCount\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "unread-count"
+              ]
+            },
+            "description": "Get unread notification count for badge rendering."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification As Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/{{notificationId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notificationId}}",
+                "read"
+              ]
+            },
+            "description": "Mark a specific notification as read."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All Notifications As Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Mark all notifications of the current user as read."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Week 8 - RBAC & Exception Scenarios",
+      "description": "Tests verifying Week 8 RBAC, anti-enumeration, and exception handling",
+      "item": [
+        {
+          "name": "RBAC Positive - Admin View Plans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK for ADMIN/PLAN_VIEW\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/plans?page=1&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "plans"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RBAC Forbidden - Customer Access Admin Plans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('customerToken') || pm.collectionVariables.get('customerToken') === '') {",
+                  "    pm.test(\"Requires customer login: please run 'Sign in as Customer (For Permission Tests)' first to save customerToken\", function () {",
+                  "        pm.expect(pm.collectionVariables.get('customerToken')).to.not.be.empty;",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Status code is 403 FORBIDDEN for regular customer\", function () {",
+                  "        pm.response.to.have.status(403);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/plans?page=1&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "plans"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RBAC Forbidden - Internal Endpoint Blocked",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get('userId') || pm.variables.get('userId') === '') {",
+                  "    pm.variables.set('userId', '00000000-0000-0000-0000-000000000000');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403 FORBIDDEN for non-internal service\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/internal/users/{{userId}}/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "internal",
+                "users",
+                "{{userId}}",
+                "permissions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Exception - Malformed JSON",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('customerToken') && pm.collectionVariables.get('accessToken')) {",
+                  "    pm.variables.set('customerToken', pm.collectionVariables.get('accessToken'));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Error response has code and message\", function () {",
+                  "    pm.expect(json).to.have.property(\"code\");",
+                  "    pm.expect(json).to.have.property(\"message\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"categoryCode\": \"TECH_SUPPORT\", \"subject\": \"Broken JSON"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support-requests"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Exception - Invalid Enum Query Param",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?status=INVALID_STATUS_VALUE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "INVALID_STATUS_VALUE"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Exception - Invalid Date Range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/support-requests?fromDate=2026-12-31&toDate=2026-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "support-requests"
+              ],
+              "query": [
+                {
+                  "key": "fromDate",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "toDate",
+                  "value": "2026-01-01"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Exception - Multiple Field Validation Failure",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Error response contains validation field details\", function () {",
+                  "    pm.expect(json).to.have.property(\"details\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryCode\": \"\",\n  \"subject\": \"\",\n  \"content\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support-requests"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "auth": {
@@ -2179,11 +3169,16 @@
     },
     {
       "key": "customerUsername",
-      "value": "customer"
+      "value": "nvminh1602"
     },
     {
       "key": "customerPassword",
-      "value": ""
+      "value": "Telecare@123"
+    },
+    {
+      "key": "notificationId",
+      "value": "1",
+      "type": "string"
     }
   ]
 }

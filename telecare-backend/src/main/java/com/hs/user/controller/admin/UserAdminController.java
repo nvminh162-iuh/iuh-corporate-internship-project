@@ -33,14 +33,13 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequestMapping("/admin/users")
-@PreAuthorize("hasAuthority('ADMIN')")
 public class UserAdminController {
 
     UserService userService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('USER_CREATE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER_CREATE')")
     public ApiResponse<AdminCreateUserResponse> createUser(
             @RequestBody @Valid AdminCreateUserRequest request) {
         return ApiResponse.<AdminCreateUserResponse>builder()
@@ -50,6 +49,7 @@ public class UserAdminController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER_VIEW')")
     public ApiResponse<PageResponse<UserResponse>> findAllUsers(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         PageResponse<UserResponse> page = new PageResponse<>(userService.findAllUsers(pageable));
@@ -59,6 +59,7 @@ public class UserAdminController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER_VIEW')")
     public ApiResponse<UserResponse> findUserById(@PathVariable String userId) {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.findUserById(userId))
@@ -66,7 +67,7 @@ public class UserAdminController {
     }
 
     @PutMapping("/{userId}")
-    @PreAuthorize("hasAuthority('USER_UPDATE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER_UPDATE')")
     public ApiResponse<UserResponse> updateUser(
             @PathVariable String userId,
             @RequestBody @Valid AdminUpdateUserRequest request) {
@@ -77,6 +78,7 @@ public class UserAdminController {
     }
 
     @PatchMapping("/{userId}/disable")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER_UPDATE')")
     public ApiResponse<@NonNull Void> disableUser(@PathVariable String userId) {
         userService.updateUserStatus(userId, false);
         return ApiResponse.<Void>builder()
@@ -85,6 +87,7 @@ public class UserAdminController {
     }
 
     @PatchMapping("/{userId}/enable")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER_UPDATE')")
     public ApiResponse<@NonNull Void> enableUser(@PathVariable String userId) {
         userService.updateUserStatus(userId, true);
         return ApiResponse.<Void>builder()
@@ -93,7 +96,7 @@ public class UserAdminController {
     }
 
     @PostMapping("/{userId}/resend-invitation")
-    @PreAuthorize("hasAuthority('USER_CREATE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER_CREATE')")
     public ApiResponse<@NonNull Void> resendInvitation(@PathVariable String userId) {
         userService.resendInvitation(userId);
         return ApiResponse.<Void>builder()
@@ -102,6 +105,7 @@ public class UserAdminController {
     }
 
     @PostMapping("/assign-role")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER_UPDATE')")
     public ApiResponse<Void> assignRole(@RequestBody @Valid UserRoleAssign request) {
         userService.assignRole(request);
         return ApiResponse.<Void>builder()

@@ -20,7 +20,11 @@ public class CurrentUserUtils {
     UserRepository userRepository;
 
     public String getCurrentUserId() {
-        return UserContextHolder.get().getUserId();
+        UserContextHolder holder = UserContextHolder.get();
+        if (holder == null || holder.getUserId() == null || holder.getUserId().isBlank()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        return holder.getUserId();
     }
 
     public User getCurrentUser() {

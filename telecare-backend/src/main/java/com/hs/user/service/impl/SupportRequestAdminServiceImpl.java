@@ -32,12 +32,14 @@ import com.hs.user.model.Role;
 import com.hs.user.model.SupportRequest;
 import com.hs.user.model.SupportRequestHistory;
 import com.hs.user.model.User;
+import com.hs.user.model.constant.NotificationType;
 import com.hs.user.model.constant.SupportRequestHistoryAction;
 import com.hs.user.model.constant.SupportRequestStatus;
 import com.hs.user.repository.SupportRequestHistoryRepository;
 import com.hs.user.repository.SupportRequestRepository;
 import com.hs.user.repository.UserRepository;
 import com.hs.user.repository.specification.SupportRequestSpecification;
+import com.hs.user.service.NotificationService;
 import com.hs.user.service.SupportRequestAdminService;
 
 import lombok.AccessLevel;
@@ -76,6 +78,7 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
     SupportRequestRepository supportRequestRepository;
     SupportRequestHistoryRepository supportRequestHistoryRepository;
     UserRepository userRepository;
+    NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -131,7 +134,20 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
 
         SupportRequest saved = supportRequestRepository.save(req);
 
-        createHistoryEntry(saved, oldStatus, SupportRequestStatus.RECEIVED, SupportRequestHistoryAction.STATUS_CHANGED, "Đã tiếp nhận ticket", actorId);
+        SupportRequestHistory history = createHistoryEntry(saved, oldStatus, SupportRequestStatus.RECEIVED, SupportRequestHistoryAction.STATUS_CHANGED, "Đã tiếp nhận ticket", actorId);
+
+        if (notificationService != null) {
+            String historyId = (history != null && history.getId() != null) ? history.getId() : java.util.UUID.randomUUID().toString();
+            notificationService.createNotification(
+                    saved.getCustomerId(),
+                    NotificationType.SUPPORT_REQUEST_RECEIVED,
+                    "Yêu cầu hỗ trợ đã được tiếp nhận",
+                    "Yêu cầu hỗ trợ " + saved.getTicketCode() + " của bạn đã được tiếp nhận và đang chờ xử lý.",
+                    "SUPPORT_REQUEST",
+                    saved.getId(),
+                    historyId
+            );
+        }
 
         log.info("Ticket id={} ticketCode={} received by actorId={}", id, req.getTicketCode(), actorId);
         return findAdminSupportRequestById(id);
@@ -179,7 +195,20 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
                 ? request.getNote().trim()
                 : defaultNote;
 
-        createHistoryEntry(saved, oldStatus, newStatus, SupportRequestHistoryAction.ASSIGNED, note, actorId);
+        SupportRequestHistory history = createHistoryEntry(saved, oldStatus, newStatus, SupportRequestHistoryAction.ASSIGNED, note, actorId);
+
+        if (oldStatus != newStatus && notificationService != null) {
+            String historyId = (history != null && history.getId() != null) ? history.getId() : java.util.UUID.randomUUID().toString();
+            notificationService.createNotification(
+                    saved.getCustomerId(),
+                    NotificationType.SUPPORT_REQUEST_STATUS_CHANGED,
+                    "Yêu cầu hỗ trợ đã cập nhật trạng thái",
+                    "Yêu cầu hỗ trợ " + saved.getTicketCode() + " đã chuyển sang trạng thái " + newStatus + ".",
+                    "SUPPORT_REQUEST",
+                    saved.getId(),
+                    historyId
+            );
+        }
 
         log.info("Ticket id={} assigned to staffId={} by actorId={}", id, staff.getId(), actorId);
         return findAdminSupportRequestById(id);
@@ -232,7 +261,20 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
         req.setStatus(targetStatus);
         SupportRequest saved = supportRequestRepository.save(req);
 
-        createHistoryEntry(saved, oldStatus, targetStatus, SupportRequestHistoryAction.STATUS_CHANGED, note.isBlank() ? "Cập nhật trạng thái sang " + targetStatus : note, actorId);
+        SupportRequestHistory history = createHistoryEntry(saved, oldStatus, targetStatus, SupportRequestHistoryAction.STATUS_CHANGED, note.isBlank() ? "Cập nhật trạng thái sang " + targetStatus : note, actorId);
+
+        if (notificationService != null) {
+            String historyId = (history != null && history.getId() != null) ? history.getId() : java.util.UUID.randomUUID().toString();
+            notificationService.createNotification(
+                    saved.getCustomerId(),
+                    NotificationType.SUPPORT_REQUEST_STATUS_CHANGED,
+                    "Yêu cầu hỗ trợ đã cập nhật trạng thái",
+                    "Yêu cầu hỗ trợ " + saved.getTicketCode() + " đã chuyển sang trạng thái " + targetStatus + ".",
+                    "SUPPORT_REQUEST",
+                    saved.getId(),
+                    historyId
+            );
+        }
 
         log.info("Ticket id={} status updated from {} to {} by actorId={}", id, oldStatus, targetStatus, actorId);
         return findAdminSupportRequestById(id);
@@ -341,7 +383,8 @@ public class SupportRequestAdminServiceImpl implements SupportRequestAdminServic
                 .actorId(actorId)
                 .build();
 
-        return supportRequestHistoryRepository.save(history);
+        SupportRequestHistory saved = supportRequestHistoryRepository.save(history);
+        return saved != null ? saved : history;
     }
 
     private UserResponse resolveUser(String userId) {

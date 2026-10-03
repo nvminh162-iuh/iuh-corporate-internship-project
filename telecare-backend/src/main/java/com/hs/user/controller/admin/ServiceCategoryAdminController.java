@@ -39,7 +39,7 @@ public class ServiceCategoryAdminController {
     ServiceCategoryService serviceCategoryService;
 
     @GetMapping
-    // @PreAuthorize("hasAuthority('CATEGORY_VIEW')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CATEGORY_VIEW')")
     public ApiResponse<PageResponse<ServiceCategoryResponse>> findAllCategories(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         PageResponse<ServiceCategoryResponse> page = new PageResponse<>(serviceCategoryService.findAllCategories(pageable));
@@ -49,7 +49,7 @@ public class ServiceCategoryAdminController {
     }
 
     @GetMapping("/all")
-    // @PreAuthorize("hasAuthority('CATEGORY_VIEW')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CATEGORY_VIEW')")
     public ApiResponse<List<ServiceCategoryResponse>> findAllActiveCategoriesForDropdown() {
         return ApiResponse.<List<ServiceCategoryResponse>>builder()
                 .result(serviceCategoryService.findAllActiveCategoriesForDropdown())
@@ -58,7 +58,7 @@ public class ServiceCategoryAdminController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    // @PreAuthorize("hasAuthority('CATEGORY_CREATE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CATEGORY_CREATE')")
     public ApiResponse<ServiceCategoryResponse> createCategory(
             @RequestBody @Valid ServiceCategoryRequest request) {
         return ApiResponse.<ServiceCategoryResponse>builder()
@@ -68,7 +68,7 @@ public class ServiceCategoryAdminController {
     }
 
     @PutMapping("/{id}")
-    // @PreAuthorize("hasAuthority('CATEGORY_UPDATE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CATEGORY_UPDATE')")
     public ApiResponse<ServiceCategoryResponse> updateCategory(
             @PathVariable String id,
             @RequestBody @Valid ServiceCategoryRequest request) {
@@ -79,7 +79,7 @@ public class ServiceCategoryAdminController {
     }
 
     @PatchMapping("/{id}/enable")
-    // @PreAuthorize("hasAuthority('CATEGORY_UPDATE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CATEGORY_UPDATE')")
     public ApiResponse<@NonNull Void> enableCategory(@PathVariable String id) {
         serviceCategoryService.enableCategory(id);
         return ApiResponse.<Void>builder()
@@ -88,7 +88,7 @@ public class ServiceCategoryAdminController {
     }
 
     @PatchMapping("/{id}/disable")
-    // @PreAuthorize("hasAuthority('CATEGORY_DELETE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CATEGORY_DELETE')")
     public ApiResponse<@NonNull Void> disableCategory(@PathVariable String id) {
         serviceCategoryService.disableCategory(id);
         return ApiResponse.<Void>builder()

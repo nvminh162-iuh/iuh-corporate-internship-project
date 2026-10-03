@@ -11,4 +11,6 @@ import com.hs.user.model.SupportRequestHistory;
 public interface SupportRequestHistoryRepository extends JpaRepository<SupportRequestHistory, String> {
 
     List<SupportRequestHistory> findBySupportRequestIdOrderByCreatedAtDesc(String supportRequestId);
+
+    List<SupportRequestHistory> findBySupportRequestIdOrderByCreatedAtAsc(String supportRequestId);
 }

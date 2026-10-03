@@ -42,16 +42,13 @@ export default function Header({ collapsed, onToggleCollapse }: HeaderProps) {
 
       {/* 2. Right Actions: Notification + User Dropdown */}
       <div className="flex items-center gap-3 shrink-0">
-        {/* Notification Bell with Badge */}
+        {/* Notification Bell */}
         <button
           type="button"
           className="relative w-10 h-10 rounded-full border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
           title="Thông báo hệ thống"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none shadow-xs">
-            7
-          </span>
         </button>
 
         {/* User Dropdown (Pill trigger + Popup Menu giống Client) */}

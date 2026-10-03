@@ -38,6 +38,9 @@ public interface UserService {
     @Transactional(readOnly = true)
     UserPermissionsResponse getUserPermissions(String userId);
 
+    @Transactional(readOnly = true)
+    UserPermissionsResponse getMyPermissions();
+
     void updateUserPassword(UpdatePasswordRequest request);
 
     void setInitialPassword(SetInitialPasswordRequest request);

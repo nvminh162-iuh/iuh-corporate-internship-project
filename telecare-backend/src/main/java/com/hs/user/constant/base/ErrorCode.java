@@ -73,6 +73,12 @@ public enum ErrorCode {
     STAFF_NOT_ELIGIBLE(1608, "Assigned user is not an active staff member", HttpStatus.BAD_REQUEST),
     INVALID_DATE_RANGE(1609, "From date cannot be after to date", HttpStatus.BAD_REQUEST),
     RESOLUTION_REQUIRED(1610, "Resolution details are required when completing a ticket", HttpStatus.BAD_REQUEST),
+    SUPPORT_REQUEST_CONFLICT(1611, "Support request was modified concurrently. Please refresh and try again.", HttpStatus.CONFLICT),
+    // NOTIFICATION (1701-1799)
+    NOTIFICATION_NOT_EXISTED(1701, "Notification not existed", HttpStatus.NOT_FOUND),
+    // VALIDATION / DATA CONFLICT
+    INVALID_REQUEST_BODY(1023, "Invalid request body or malformed payload", HttpStatus.BAD_REQUEST),
+    DATA_INTEGRITY_VIOLATION(1024, "Data conflict or integrity constraint violation", HttpStatus.CONFLICT),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

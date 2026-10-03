@@ -9,6 +9,7 @@ import {
   ChevronUp,
   ChevronRight,
   Settings,
+  Ticket,
 } from "lucide-react";
 
 export default function UserDropdown() {
@@ -85,6 +86,18 @@ export default function UserDropdown() {
       {isOpen && (
         <div className="absolute right-0 mt-2.5 w-64 bg-popover text-popover-foreground rounded-2xl shadow-2xl border border-border p-2 z-50 animate-in fade-in-50 zoom-in-95 duration-150">
           <nav className="space-y-1">
+            {/* Yêu cầu của tôi */}
+            <Link
+              href="/support/requests"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-foreground hover:bg-muted transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <Ticket className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <span className="text-xs font-semibold">Yêu cầu của tôi</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+            </Link>
             {/* Cài đặt */}
             <Link
               href="/settings"

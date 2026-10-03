@@ -43,7 +43,7 @@ public class ServicePlanAdminController {
     ServicePlanService servicePlanService;
 
     @GetMapping
-    // @PreAuthorize("hasAuthority('PLAN_VIEW')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PLAN_VIEW')")
     public ApiResponse<PageResponse<ServicePlanSummaryResponse>> findAllPlans(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryId,
@@ -58,7 +58,7 @@ public class ServicePlanAdminController {
     }
 
     @GetMapping("/{id}")
-    // @PreAuthorize("hasAuthority('PLAN_VIEW')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PLAN_VIEW')")
     public ApiResponse<ServicePlanDetailResponse> findPlanDetailById(@PathVariable String id) {
         return ApiResponse.<ServicePlanDetailResponse>builder()
                 .result(servicePlanService.findPlanDetailById(id))
@@ -67,7 +67,7 @@ public class ServicePlanAdminController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    // @PreAuthorize("hasAuthority('PLAN_CREATE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PLAN_CREATE')")
     public ApiResponse<ServicePlanDetailResponse> createPlan(
             @RequestBody @Valid ServicePlanCreateRequest request) {
         return ApiResponse.<ServicePlanDetailResponse>builder()
@@ -77,7 +77,7 @@ public class ServicePlanAdminController {
     }
 
     @PutMapping("/{id}")
-    // @PreAuthorize("hasAuthority('PLAN_UPDATE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PLAN_UPDATE')")
     public ApiResponse<ServicePlanDetailResponse> updatePlan(
             @PathVariable String id,
             @RequestBody @Valid ServicePlanUpdateRequest request) {
@@ -88,7 +88,7 @@ public class ServicePlanAdminController {
     }
 
     @PatchMapping("/{id}/status")
-    // @PreAuthorize("hasAuthority('PLAN_UPDATE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PLAN_UPDATE')")
     public ApiResponse<ServicePlanDetailResponse> updatePlanStatus(
             @PathVariable String id,
             @RequestBody @Valid ServicePlanStatusUpdateRequest request) {
@@ -99,7 +99,7 @@ public class ServicePlanAdminController {
     }
 
     @DeleteMapping("/{id}")
-    // @PreAuthorize("hasAuthority('PLAN_DELETE')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PLAN_DELETE')")
     public ApiResponse<@NonNull Void> softDeletePlan(@PathVariable String id) {
         servicePlanService.softDeletePlan(id);
         return ApiResponse.<Void>builder()

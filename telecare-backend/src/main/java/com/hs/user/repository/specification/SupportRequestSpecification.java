@@ -64,4 +64,43 @@ public class SupportRequestSpecification {
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+    public static Specification<SupportRequest> filterCustomerRequests(String customerId, com.hs.user.dto.request.CustomerSupportRequestQuery query) {
+        return (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Always enforce customerId ownership
+            predicates.add(criteriaBuilder.equal(root.get("customerId"), customerId));
+
+            if (query != null) {
+                if (query.getKeyword() != null && !query.getKeyword().isBlank()) {
+                    String pattern = "%" + query.getKeyword().trim().toLowerCase() + "%";
+                    Predicate ticketCodeMatch = criteriaBuilder.like(criteriaBuilder.lower(root.get("ticketCode")), pattern);
+                    Predicate subjectMatch = criteriaBuilder.like(criteriaBuilder.lower(root.get("subject")), pattern);
+                    Predicate contentMatch = criteriaBuilder.like(criteriaBuilder.lower(root.get("content")), pattern);
+                    predicates.add(criteriaBuilder.or(ticketCodeMatch, subjectMatch, contentMatch));
+                }
+
+                if (query.getStatus() != null) {
+                    predicates.add(criteriaBuilder.equal(root.get("status"), query.getStatus()));
+                }
+
+                if (query.getCategoryCode() != null && !query.getCategoryCode().isBlank()) {
+                    predicates.add(criteriaBuilder.equal(root.get("category").get("code"), query.getCategoryCode().trim()));
+                }
+
+                if (query.getFromDate() != null) {
+                    Instant fromInstant = query.getFromDate().atStartOfDay(BUSINESS_ZONE_ID).toInstant();
+                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), fromInstant));
+                }
+
+                if (query.getToDate() != null) {
+                    Instant toInstant = query.getToDate().plusDays(1).atStartOfDay(BUSINESS_ZONE_ID).toInstant();
+                    predicates.add(criteriaBuilder.lessThan(root.get("createdAt"), toInstant));
+                }
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 }

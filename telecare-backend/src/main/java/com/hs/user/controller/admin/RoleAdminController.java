@@ -22,12 +22,12 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequestMapping("/admin/roles")
-@PreAuthorize("hasAuthority('ADMIN')")
 public class RoleAdminController {
 
     RoleService roleService;
 
     @PostMapping()
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_CREATE')")
     public ApiResponse<@NonNull Void> createRole(
             @RequestBody @Valid UpsertRoleRequest upsertRoleRequest) {
         roleService.createRole(upsertRoleRequest);
@@ -35,6 +35,7 @@ public class RoleAdminController {
     }
 
     @GetMapping()
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_VIEW')")
     public ApiResponse<PageResponse<RoleResponse>> findAllRoles(
             @PageableDefault(value = 10) Pageable pageable) {
         PageResponse<RoleResponse> page = new PageResponse<>(
@@ -46,6 +47,7 @@ public class RoleAdminController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_VIEW')")
     public ApiResponse<List<RoleResponse>> findAllRoles() {
         return ApiResponse.<List<RoleResponse>>builder()
                 .result(roleService.findAllRoles())
@@ -53,6 +55,7 @@ public class RoleAdminController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_VIEW')")
     public ApiResponse<RoleResponse> findById(@PathVariable("id") String id) {
         return ApiResponse.<RoleResponse>builder()
                 .result(roleService.findById(id))
@@ -60,6 +63,7 @@ public class RoleAdminController {
     }
 
     @PostMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_UPDATE')")
     public ApiResponse<@NonNull Void> updateRole(
             @RequestBody @Valid UpsertRoleRequest upsertRoleRequest,
             @PathVariable("id") String id) {
@@ -68,6 +72,7 @@ public class RoleAdminController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_DELETE')")
     public ApiResponse<@NonNull Void> deleteRole(
             @PathVariable("id") String id) {
         roleService.deleteRoleById(id);

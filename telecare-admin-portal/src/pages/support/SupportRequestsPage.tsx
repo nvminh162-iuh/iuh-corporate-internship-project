@@ -28,6 +28,7 @@ import type {
   UserSummaryInfo,
 } from "@/types/support-admin.type";
 import type { AdminUser } from "@/types/user.type";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const STATUS_CONFIG: Record<
   SupportRequestStatus,
@@ -109,23 +110,29 @@ export default function SupportRequestsPage() {
   // Action Loading
   const [receivingId, setReceivingId] = useState<string | null>(null);
 
+  const { hasPermission } = usePermissions();
+  const canAssign = hasPermission("SUPPORT_REQUEST_ASSIGN");
+  const canProcess = hasPermission("SUPPORT_REQUEST_PROCESS");
+
   // Fetch Options
   const fetchOptions = useCallback(async () => {
     try {
-      const [cats, staffList] = await Promise.all([
-        getSupportCategories().catch(() => []),
-        getEligibleAssignees().catch(() =>
-          getAdminUsers(1, 100)
-            .then((res) => res.result || [])
-            .catch(() => [])
-        ),
-      ]);
+      const catsPromise = getSupportCategories().catch(() => []);
+      const staffPromise = canAssign
+        ? getEligibleAssignees().catch(() =>
+            getAdminUsers(1, 100)
+              .then((res) => res.result || [])
+              .catch(() => [])
+          )
+        : Promise.resolve([]);
+
+      const [cats, staffList] = await Promise.all([catsPromise, staffPromise]);
       setCategories(cats);
       setStaffUsers(staffList);
     } catch {
       // Ignore fallback
     }
-  }, []);
+  }, [canAssign]);
 
   // Fetch Tickets
   const fetchTickets = useCallback(async () => {
@@ -470,7 +477,7 @@ export default function SupportRequestsPage() {
                       {/* Actions */}
                       <td className="px-4 py-3.5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          {item.status === "NEW" && (
+                          {canProcess && item.status === "NEW" && (
                             <Button
                               variant="outline"
                               size="sm"

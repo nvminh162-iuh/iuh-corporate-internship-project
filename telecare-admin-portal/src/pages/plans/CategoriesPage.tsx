@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { FolderTree } from "lucide-react";
-import { useAuth } from "@/features/auth/useAuth";
 import {
   getAdminCategories,
   setAdminCategoryActive,
@@ -13,10 +12,13 @@ import CategoryTable from "@/components/categories/CategoryTable";
 import CategoryFormModal from "@/components/categories/CategoryFormModal";
 import UserPagination from "@/components/users/UserPagination";
 import { getApiErrorMessage } from "@/utils/userUtils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function CategoriesPage() {
-  const { profile } = useAuth();
-  const isAdmin = profile?.role === "ADMIN" || true;
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission("CATEGORY_CREATE");
+  const canUpdate = hasPermission("CATEGORY_UPDATE");
+  const canDelete = hasPermission("CATEGORY_DELETE");
 
   // List & Pagination State
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
@@ -60,7 +62,10 @@ export default function CategoriesPage() {
   }, [page, size, searchQuery]);
 
   useEffect(() => {
-    fetchCategories();
+    const timer = setTimeout(() => {
+      fetchCategories();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchCategories]);
 
   // Enable / Disable toggle
@@ -108,7 +113,7 @@ export default function CategoriesPage() {
         <CategoryToolbar
           searchQuery={searchQuery}
           loading={loading}
-          canCreate={isAdmin}
+          canCreate={canCreate}
           onSearchChange={handleSearchChange}
           onRefresh={fetchCategories}
           onCreateClick={() => {
@@ -123,8 +128,8 @@ export default function CategoriesPage() {
           loading={loading}
           page={page}
           size={size}
-          canUpdate={isAdmin}
-          canDelete={isAdmin}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
           onEdit={(cat) => {
             setEditingCategory(cat);
             setIsFormOpen(true);

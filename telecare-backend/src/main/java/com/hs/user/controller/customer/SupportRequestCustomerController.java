@@ -23,6 +23,20 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import com.hs.user.dto.base.PageResponse;
+import com.hs.user.dto.request.CustomerSupportRequestQuery;
+import com.hs.user.dto.response.CustomerSupportRequestDetailResponse;
+import com.hs.user.dto.response.CustomerSupportRequestHistoryResponse;
+import com.hs.user.dto.response.CustomerSupportRequestSummaryResponse;
+
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -42,6 +56,48 @@ public class SupportRequestCustomerController {
 
         return ApiResponse.<SupportRequestResponse>builder()
                 .message("Yêu cầu hỗ trợ đã được tạo thành công")
+                .result(response)
+                .build();
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<PageResponse<CustomerSupportRequestSummaryResponse>> findMySupportRequests(
+            CustomerSupportRequestQuery query,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        String customerId = resolveCustomerId();
+
+        PageResponse<CustomerSupportRequestSummaryResponse> response = new PageResponse<>(
+                supportRequestService.findMySupportRequests(customerId, query, pageable)
+        );
+
+        return ApiResponse.<PageResponse<CustomerSupportRequestSummaryResponse>>builder()
+                .result(response)
+                .build();
+    }
+
+    @GetMapping("/me/{id}")
+    public ApiResponse<CustomerSupportRequestDetailResponse> findMySupportRequestDetail(
+            @PathVariable String id
+    ) {
+        String customerId = resolveCustomerId();
+
+        CustomerSupportRequestDetailResponse response = supportRequestService.findMySupportRequestDetail(customerId, id);
+
+        return ApiResponse.<CustomerSupportRequestDetailResponse>builder()
+                .result(response)
+                .build();
+    }
+
+    @GetMapping("/me/{id}/histories")
+    public ApiResponse<List<CustomerSupportRequestHistoryResponse>> findMySupportRequestHistories(
+            @PathVariable String id
+    ) {
+        String customerId = resolveCustomerId();
+
+        List<CustomerSupportRequestHistoryResponse> response = supportRequestService.findMySupportRequestHistories(customerId, id);
+
+        return ApiResponse.<List<CustomerSupportRequestHistoryResponse>>builder()
                 .result(response)
                 .build();
     }
