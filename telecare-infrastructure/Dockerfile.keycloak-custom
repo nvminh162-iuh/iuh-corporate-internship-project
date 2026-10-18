@@ -1,0 +1,38 @@
+# Build the two provider modules before running docker build (see the workflow).
+ARG KEYCLOAK_VERSION=26.5.2
+
+FROM quay.io/keycloak/keycloak:${KEYCLOAK_VERSION} AS builder
+ENV KC_DB=postgres \
+    KC_HEALTH_ENABLED=true \
+    KC_METRICS_ENABLED=true
+WORKDIR /opt/keycloak
+
+# Use freshly compiled artifacts, never the checked-in provider JARs.
+COPY --chown=1000:0 --chmod=0644 keycloak/keycloak-event-publisher/target/keycloak-kafka-listener.jar /opt/keycloak/providers/keycloak-kafka-listener.jar
+COPY --chown=1000:0 --chmod=0644 keycloak/keycloak-phone-login/target/keycloak-phone-login.jar /opt/keycloak/providers/keycloak-phone-login.jar
+COPY --chown=1000:0 keycloak/keycloak-themes/ /opt/keycloak/themes/
+
+# Stable timestamps prevent optimized startup from detecting changed providers.
+RUN touch -m --date=@1743465600 /opt/keycloak/providers/*.jar \
+    && mkdir -p /opt/keycloak/data/import \
+    && chmod 0755 /opt/keycloak/data/import \
+    && /opt/keycloak/bin/kc.sh build
+
+FROM quay.io/keycloak/keycloak:${KEYCLOAK_VERSION}
+ENV KC_DB=postgres \
+    KC_HEALTH_ENABLED=true \
+    KC_METRICS_ENABLED=true
+WORKDIR /opt/keycloak
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
+COPY --chown=1000:0 --chmod=0644 keycloak/realm-export.json /opt/keycloak/data/import/telecare-platform-realm.json
+RUN test -r /opt/keycloak/data/import/telecare-platform-realm.json \
+    && test -s /opt/keycloak/providers/keycloak-kafka-listener.jar \
+    && test -s /opt/keycloak/providers/keycloak-phone-login.jar \
+    && test -r /opt/keycloak/themes/telecare/login/theme.properties \
+    && test -r /opt/keycloak/themes/telecare-admin/login/theme.properties
+
+# Credentials, hostname, proxy headers and Kafka endpoints are runtime settings.
+# EXPOSE is metadata only; do not publish the management port to the Internet.
+EXPOSE 8080 8443 9000
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+CMD ["start", "--optimized", "--import-realm"]

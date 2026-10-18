@@ -1,0 +1,95 @@
+name: TeleCare - Build & Push Keycloak Image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - telecare-infrastructure/keycloak/**
+      - telecare-infrastructure/scripts/**
+      - telecare-infrastructure/Dockerfile.keycloak-custom
+      - telecare-infrastructure/.dockerignore
+      - .github/workflows/build-keycloak-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telecare-keycloak-image-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  KEYCLOAK_VERSION: '26.5.2'
+  IMAGE_NAME: nvminh162/telecare-keycloak
+
+jobs:
+  build-and-push:
+    # Do not let a manual run on another branch replace the deployment image.
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Check Docker Hub credentials
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
+            echo '::error::Configure DOCKER_USERNAME and DOCKER_PASSWORD in repository Actions secrets.'
+            exit 1
+          fi
+          if [ "$DOCKER_USERNAME" != 'nvminh162' ]; then
+            echo '::error::DOCKER_USERNAME must own or have push access to the configured image namespace; this workflow expects nvminh162.'
+            exit 1
+          fi
+
+      - name: Validate realm credential guard
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s telecare-infrastructure/scripts -p 'test_*.py'
+          python3 telecare-infrastructure/scripts/validate_keycloak_realm.py
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: corretto
+          cache: maven
+          cache-dependency-path: |
+            telecare-infrastructure/keycloak/keycloak-event-publisher/pom.xml
+            telecare-infrastructure/keycloak/keycloak-phone-login/pom.xml
+
+      - name: Build both Keycloak providers from source
+        run: |
+          mvn --batch-mode --no-transfer-progress -f telecare-infrastructure/keycloak/keycloak-event-publisher/pom.xml clean verify -Dmaven.antrun.skip=true
+          mvn --batch-mode --no-transfer-progress -f telecare-infrastructure/keycloak/keycloak-phone-login/pom.xml clean verify -Dmaven.antrun.skip=true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Keycloak image
+        uses: docker/build-push-action@v6
+        with:
+          # Path context includes the JARs built above, unlike default Git context.
+          context: ./telecare-infrastructure
+          file: ./telecare-infrastructure/Dockerfile.keycloak-custom
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            KEYCLOAK_VERSION=${{ env.KEYCLOAK_VERSION }}
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha,scope=telecare-keycloak
+          cache-to: type=gha,mode=max,scope=telecare-keycloak

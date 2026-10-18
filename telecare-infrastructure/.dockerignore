@@ -1,0 +1,14 @@
+# Allow only the files used by the Keycloak image; never send .env or old JARs.
+**
+!Dockerfile.keycloak-custom
+!.dockerignore
+!keycloak/
+!keycloak/keycloak-event-publisher/
+!keycloak/keycloak-event-publisher/target/
+!keycloak/keycloak-event-publisher/target/keycloak-kafka-listener.jar
+!keycloak/keycloak-phone-login/
+!keycloak/keycloak-phone-login/target/
+!keycloak/keycloak-phone-login/target/keycloak-phone-login.jar
+!keycloak/keycloak-themes/
+!keycloak/keycloak-themes/**
+!keycloak/realm-export.json
