@@ -7,9 +7,9 @@ services:
         container_name: telecare-postgres
         restart: unless-stopped
         environment:
-            POSTGRES_DB: ${POSTGRES_DB:-keycloak}
-            POSTGRES_USER: ${POSTGRES_USER:-telecare}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-telecare123}
+            POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set and non-empty}
+            POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set and non-empty}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set and non-empty}
         ports:
             - '55432:5432'
         volumes:
@@ -30,9 +30,9 @@ services:
         image: redis:7-alpine
         container_name: telecare-redis
         restart: unless-stopped
-        command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-telecare123}
+        command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set and non-empty}
         environment:
-            REDIS_PASSWORD: ${REDIS_PASSWORD:-telecare123}
+            REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set and non-empty}
         ports:
             - '56379:6379'
         volumes:
@@ -121,16 +121,16 @@ services:
         environment:
             # Database
             KC_DB: postgres
-            KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-keycloak}
-            KC_DB_USERNAME: ${POSTGRES_USER:-telecare}
-            KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-telecare123}
+            KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:?POSTGRES_DB must be set and non-empty}
+            KC_DB_USERNAME: ${POSTGRES_USER:?POSTGRES_USER must be set and non-empty}
+            KC_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set and non-empty}
             # Keycloak
             # Chỉ tạo admin ở lần khởi động đầu tiên (khi master realm chưa tồn tại).
-            KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-telecare}
-            KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-telecare123}
+            KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:?KEYCLOAK_ADMIN_USERNAME must be set and non-empty}
+            KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD must be set and non-empty}
             # SPI Config
-            KAFKA_BOOTSTRAP_SERVER: ${KAFKA_BOOTSTRAP_SERVER:-kafka:19092}
-            KEYCLOAK_KAFKA_TOPIC: ${KEYCLOAK_KAFKA_TOPIC:-keycloak-user-events}
+            KAFKA_BOOTSTRAP_SERVER: ${KAFKA_BOOTSTRAP_SERVER:?KAFKA_BOOTSTRAP_SERVER must be set and non-empty}
+            KEYCLOAK_KAFKA_TOPIC: ${KEYCLOAK_KAFKA_TOPIC:?KEYCLOAK_KAFKA_TOPIC must be set and non-empty}
             # Health & Metrics
             KC_HEALTH_ENABLED: 'true'
             KC_METRICS_ENABLED: 'true'
@@ -140,8 +140,8 @@ services:
             # Network
             # Keycloak 26 dùng Hostname v2 — bỏ hostname-strict-https (đã deprecate).
             KC_HTTP_ENABLED: 'true'
-            KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
-            KC_HOSTNAME_STRICT: ${KEYCLOAK_HOSTNAME_STRICT:-false}
+            KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:?KEYCLOAK_HOSTNAME must be set and non-empty}
+            KC_HOSTNAME_STRICT: ${KEYCLOAK_HOSTNAME_STRICT:?KEYCLOAK_HOSTNAME_STRICT must be set and non-empty}
             JAVA_OPTS_APPEND: -Xms256m -Xmx512m
         networks:
             - telecare-network
@@ -162,6 +162,10 @@ networks:
 #  =================================================================
 #  Usage
 #  =================================================================
+#  Environment: all referenced variables must be set and non-empty in .env or the shell.
+#  Validate configuration without starting containers:
+#    docker compose -f docker-infrastructure.yml config --quiet
+#
 #  Start infrastructure:
 #    docker compose -f docker-infrastructure.yml up -d
 #
@@ -172,16 +176,16 @@ networks:
 #    Host in Docker: postgres
 #    Host on local machine: localhost
 #    Port on local machine: 55432
-#    Databases: keycloak (Keycloak), telecare (monolith)
-#    Username: telecare
-#    Password: telecare123
+#    Databases: POSTGRES_DB (Keycloak), telecare (monolith)
+#    Username: POSTGRES_USER from .env
+#    Password: POSTGRES_PASSWORD from .env
 #
 #  Redis:
 #    Host in Docker: redis
 #    Host on local machine: localhost
 #    Port on local machine: 56379
 #    Username: leave empty
-#    Password: telecare123
+#    Password: REDIS_PASSWORD from .env
 #
 #  Kafka:
 #    Bootstrap server in Docker: kafka:19092
@@ -190,5 +194,5 @@ networks:
 #  Keycloak:
 #    URL: http://localhost:59000
 #    Health: http://localhost:59001/health/ready
-#    Admin username: telecare
-#    Admin password: telecare123
+#    Admin username: KEYCLOAK_ADMIN_USERNAME from .env
+#    Admin password: KEYCLOAK_ADMIN_PASSWORD from .env

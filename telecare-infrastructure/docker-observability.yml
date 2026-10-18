@@ -7,8 +7,8 @@ services:
     container_name: telecare-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-zolaracskh@gmail.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-telecare123}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?PGADMIN_DEFAULT_EMAIL must be set and non-empty}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD must be set and non-empty}
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     ports:
       - "55050:80"
@@ -62,6 +62,10 @@ networks:
 #  =================================================================
 #  Usage
 #  =================================================================
+#  Environment: all referenced variables must be set and non-empty in .env or the shell.
+#  Validate configuration without starting containers:
+#    docker compose -f docker-observability.yml config --quiet
+#
 #  Start infrastructure first:
 #    docker compose -f docker-infrastructure.yml up -d
 #
@@ -73,13 +77,13 @@ networks:
 #
 #  pgAdmin:
 #    URL: http://localhost:55050
-#    Login email: zolaracskh@gmail.com
-#    Login password: telecare123
+#    Login email: PGADMIN_DEFAULT_EMAIL from .env
+#    Login password: PGADMIN_DEFAULT_PASSWORD from .env
 #    PostgreSQL host: postgres
 #    PostgreSQL port: 5432
-#    PostgreSQL database: keycloak
-#    PostgreSQL username: telecare
-#    PostgreSQL password: telecare123
+#    PostgreSQL database: POSTGRES_DB from infrastructure .env
+#    PostgreSQL username: POSTGRES_USER from infrastructure .env
+#    PostgreSQL password: POSTGRES_PASSWORD from infrastructure .env
 #
 #  RedisInsight:
 #    URL: http://localhost:55540
@@ -92,10 +96,10 @@ networks:
 #    Host: redis
 #    Port: 6379
 #    Username: leave empty
-#    Password: telecare123
+#    Password: REDIS_PASSWORD from infrastructure .env
 #
 #  Connect to Redis from an app running on local machine:
 #    Host: localhost
 #    Port: 56379
 #    Username: leave empty
-#    Password: telecare123
+#    Password: REDIS_PASSWORD from infrastructure .env
