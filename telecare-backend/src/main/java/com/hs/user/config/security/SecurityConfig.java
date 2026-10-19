@@ -63,6 +63,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
+                "https://telecare.nvminh162.id.vn",
+                "https://telecare-seven.vercel.app",
+                "https://telecare-admin.nvminh162.id.vn",
+                "https://telecare-admin.vercel.app",
                 "http://localhost:53000",
                 "http://localhost:55000",
                 "http://localhost:3000",

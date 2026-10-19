@@ -5,14 +5,18 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -21,6 +25,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -147,5 +152,80 @@ class SecurityFilterChainIntegrationTest {
 
         mockMvc.perform(get("/service-categories"))
                 .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "https://telecare.nvminh162.id.vn",
+            "https://telecare-seven.vercel.app",
+            "https://telecare-admin.nvminh162.id.vn",
+            "https://telecare-admin.vercel.app",
+            "http://localhost:53000",
+            "http://localhost:55000",
+            "http://localhost:3000",
+            "http://localhost:5000"
+    })
+    @DisplayName("Configured frontend origins can preflight authenticated API requests")
+    void corsPreflight_allowedOrigin_returns200(String origin) throws Exception {
+        mockMvc.perform(options("/notifications")
+                        .header(HttpHeaders.ORIGIN, origin)
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization,content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "authorization, content-type"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "https://telecare.nvminh162.id.vn",
+            "https://telecare-seven.vercel.app",
+            "https://telecare-admin.nvminh162.id.vn",
+            "https://telecare-admin.vercel.app",
+            "http://localhost:53000",
+            "http://localhost:55000",
+            "http://localhost:3000",
+            "http://localhost:5000"
+    })
+    @DisplayName("Public API responses include CORS headers for configured origins")
+    void publicCategories_allowedOrigin_returnsCorsHeaders(String origin) throws Exception {
+        when(publicPlanService.findAllPublicCategories()).thenReturn(List.<PublicCategoryResponse>of());
+
+        mockMvc.perform(get("/service-categories").header(HttpHeaders.ORIGIN, origin))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "https://telecare.nvminh162.id.vn",
+            "https://telecare-seven.vercel.app",
+            "https://telecare-admin.nvminh162.id.vn",
+            "https://telecare-admin.vercel.app"
+    })
+    @DisplayName("Allowing a production origin does not bypass authentication")
+    void privateEndpoint_allowedOrigin_withoutAuthentication_returns401(String origin) throws Exception {
+        mockMvc.perform(get("/notifications").header(HttpHeaders.ORIGIN, origin))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "http://telecare.nvminh162.id.vn",
+            "http://telecare-seven.vercel.app",
+            "https://telecare.nvminh162.id.vn.untrusted.example",
+            "https://unlisted-preview.vercel.app",
+            "null"
+    })
+    @DisplayName("CORS rejects origins outside the explicit allowlist")
+    void corsPreflight_unlistedOrigin_returns403(String origin) throws Exception {
+        mockMvc.perform(options("/notifications")
+                        .header(HttpHeaders.ORIGIN, origin)
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 }
