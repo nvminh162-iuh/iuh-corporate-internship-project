@@ -5,10 +5,7 @@ on:
     branches:
       - master
     paths:
-      - telecare-infrastructure/keycloak/**
-      - telecare-infrastructure/scripts/**
-      - telecare-infrastructure/Dockerfile.keycloak-custom
-      - telecare-infrastructure/.dockerignore
+      - telecare-infrastructure/**
       - .github/workflows/build-keycloak-image.yml
   workflow_dispatch:
 

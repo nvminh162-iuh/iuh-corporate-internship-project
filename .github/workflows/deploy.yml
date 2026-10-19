@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - master
+    paths:
+      - telecare-backend/**
+      - .github/workflows/deploy.yml
   workflow_dispatch:
 
 permissions:
