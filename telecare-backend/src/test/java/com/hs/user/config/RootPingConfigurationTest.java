@@ -55,6 +55,13 @@ class RootPingConfigurationTest {
                 assertThat(root.body()).isEqualTo("ping - pong");
                 assertThat(root.headers().firstValue("Content-Type")).hasValue("text/plain;charset=UTF-8");
                 assertThat(root.headers().firstValue("Cache-Control")).hasValue("no-store");
+                if (!contextPath.isEmpty()) {
+                    assertThat(root.headers().firstValue("X-Request-Id")).isPresent();
+                    HttpResponse<String> correlated = client.send(HttpRequest.newBuilder(URI.create(baseUrl + "/"))
+                                    .header("X-Request-Id", "test-root-ping").GET().build(),
+                            HttpResponse.BodyHandlers.ofString());
+                    assertThat(correlated.headers().firstValue("X-Request-Id")).hasValue("test-root-ping");
+                }
                 assertThat(send(client, baseUrl + "/?ping=1", "GET").body()).isEqualTo("ping - pong");
 
                 HttpResponse<String> head = send(client, baseUrl + "/", "HEAD");

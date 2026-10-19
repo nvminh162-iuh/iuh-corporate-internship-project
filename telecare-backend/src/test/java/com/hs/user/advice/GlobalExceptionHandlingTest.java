@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
@@ -26,16 +27,63 @@ import com.hs.user.advice.base.AppException;
 import com.hs.user.advice.exception.GlobalException;
 import com.hs.user.constant.base.ErrorCode;
 import com.hs.user.dto.base.ApiResponse;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 class GlobalExceptionHandlingTest {
 
     private GlobalException globalException;
     private MockHttpServletRequest request;
+    private final Logger logger = (Logger) LoggerFactory.getLogger(GlobalException.class);
+    private ListAppender<ILoggingEvent> events;
 
     @BeforeEach
     void setUp() {
         globalException = new GlobalException();
         request = new MockHttpServletRequest("GET", "/api/v1/test");
+        events = new ListAppender<>();
+        events.start();
+        logger.addAppender(events);
+    }
+
+    @AfterEach
+    void tearDown() {
+        logger.detachAppender(events);
+        events.stop();
+        MDC.clear();
+    }
+
+    @Test
+    void errorLogsExcludeSensitiveMessagesValuesAndSqlButKeepDiagnostics() {
+        String secret = "synthetic-sensitive-password";
+        request.setRequestURI("/api/v1/" + secret);
+        MDC.put("requestId", "error-correlation-id");
+        globalException.handlingNotReadable(new HttpMessageNotReadableException(secret,
+                new MockHttpInputMessage(new byte[0])), request);
+        globalException.handlingTypeMismatch(new MethodArgumentTypeMismatchException(secret, Enum.class,
+                "status", mock(MethodParameter.class), new IllegalArgumentException(secret)), request);
+        globalException.handlingDataIntegrity(new DataIntegrityViolationException("SQL values=" + secret), request);
+        globalException.handlingRuntimeException(new IllegalStateException(secret, new RuntimeException(secret)), request);
+
+        assertThat(events.list).hasSize(4);
+        assertThat(events.list).allSatisfy(event -> {
+            assertThat(event.getFormattedMessage()).doesNotContain(secret);
+            assertThat(event.getThrowableProxy()).isNull();
+        });
+        assertThat(events.list.getLast().getFormattedMessage())
+                .contains("traceId=error-correlation-id", "errorType=IllegalStateException", "GlobalExceptionHandlingTest.java");
+    }
+
+    @Test
+    void validationLogsExcludeInterpolatedMessagesAndRejectedValues() {
+        String secret = "synthetic-validation-secret";
+        BeanPropertyBindingResult result = new BeanPropertyBindingResult(new Object(), "request");
+        result.addError(new FieldError("request", "password", secret, false, null, null, "Rejected " + secret));
+        globalException.handlingValidation(new MethodArgumentNotValidException(mock(MethodParameter.class), result), request);
+        assertThat(events.list.getFirst().getFormattedMessage()).contains("invalidFieldCount=1").doesNotContain(secret);
     }
 
     @Test

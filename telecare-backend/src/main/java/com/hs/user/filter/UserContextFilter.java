@@ -31,6 +31,7 @@ public class UserContextFilter extends OncePerRequestFilter {
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
             userId = jwtAuth.getToken().getSubject();
             email = jwtAuth.getToken().getClaimAsString("email");
+            RequestIdFilter.recordAuthenticatedActor(request, userId);
         }
 
         // Fallback for header-based testing or legacy requests if token not present

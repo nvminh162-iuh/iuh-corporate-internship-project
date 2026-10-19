@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -46,6 +47,8 @@ import com.hs.user.service.NotificationService;
 import com.hs.user.service.PublicPlanService;
 import com.hs.user.service.SupportRequestAdminService;
 import com.hs.user.utils.CurrentUserUtils;
+import com.hs.user.advice.base.AppException;
+import com.hs.user.constant.base.ErrorCode;
 
 @WebMvcTest(controllers = {
         SecurityFilterChainIntegrationTest.RootTestController.class,
@@ -100,6 +103,16 @@ class SecurityFilterChainIntegrationTest {
         String ping() {
             return "ping - pong";
         }
+
+        @GetMapping("/public/logging-validation")
+        String invalidInput() {
+            throw new AppException(ErrorCode.INVALID_PRICE_RANGE);
+        }
+
+        @GetMapping("/public/logging-failure")
+        String unexpectedFailure() {
+            throw new IllegalStateException("synthetic-private-exception-message");
+        }
     }
 
     @Test
@@ -122,16 +135,45 @@ class SecurityFilterChainIntegrationTest {
     @Test
     @DisplayName("Private support endpoint rejects requests without authentication")
     void privateEndpoint_withoutAuthentication_returns401() throws Exception {
-        mockMvc.perform(get("/notifications"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/notifications").header("X-Request-Id", "test-private-401"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("X-Request-Id", "test-private-401"))
+                .andExpect(jsonPath("$.traceId").value("test-private-401"));
     }
 
     @Test
     @DisplayName("Admin support endpoint rejects a customer authority")
     void adminEndpoint_customerAuthority_returns403() throws Exception {
         mockMvc.perform(get("/admin/support-requests")
+                        .header("X-Request-Id", "test-admin-403")
                         .with(jwt().authorities(new SimpleGrantedAuthority("CUSTOMER"))))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(header().string("X-Request-Id", "test-admin-403"))
+                .andExpect(jsonPath("$.traceId").value("test-admin-403"));
+    }
+
+    @Test
+    void browserCanReadRequestIdAcrossOrigins() throws Exception {
+        when(publicPlanService.findAllPublicCategories()).thenReturn(List.<PublicCategoryResponse>of());
+        mockMvc.perform(get("/service-categories")
+                        .header("Origin", "http://localhost:53000")
+                        .header("X-Request-Id", "test-browser-id"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Expose-Headers", "X-Request-Id"))
+                .andExpect(header().string("X-Request-Id", "test-browser-id"));
+    }
+
+    @Test
+    void mvcErrorsCorrelateHeaderAndErrorBody() throws Exception {
+        mockMvc.perform(get("/public/logging-validation").header("X-Request-Id", "test-validation-400"))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Request-Id", "test-validation-400"))
+                .andExpect(jsonPath("$.traceId").value("test-validation-400"));
+        mockMvc.perform(get("/public/logging-failure").header("X-Request-Id", "test-error-500"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(header().string("X-Request-Id", "test-error-500"))
+                .andExpect(jsonPath("$.traceId").value("test-error-500"))
+                .andExpect(jsonPath("$.message").value(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage()));
     }
 
     @Test

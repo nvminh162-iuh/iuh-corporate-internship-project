@@ -1,8 +1,10 @@
 package com.hs.user.advice.exception;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -37,7 +39,7 @@ public class GlobalException {
     @ExceptionHandler(value = AppException.class)
     public ResponseEntity<ApiResponse<Void>> handlingAppException(AppException exception, HttpServletRequest request) {
         ErrorCode errorCode = exception.getErrorCode();
-        log.warn("AppException [code={}, message={}]: {}", errorCode.getCode(), errorCode.getMessage(), exception.getMessage());
+        log.warn("Request rejected errorCode={} errorType=AppException", errorCode.getCode());
         return ResponseEntity.status(errorCode.getStatusCode()).body(
                 buildResponse(errorCode.getCode(), errorCode.getMessage(), null, request)
         );
@@ -54,7 +56,7 @@ public class GlobalException {
                 ? fieldErrors.values().iterator().next()
                 : ErrorCode.INVALID_KEY.getMessage();
 
-        log.warn("Validation error on path {}: {}", request != null ? request.getRequestURI() : "", fieldErrors);
+        log.warn("Request rejected errorType=MethodArgumentNotValidException invalidFieldCount={}", fieldErrors.size());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 buildResponse(ErrorCode.INVALID_KEY.getCode(), firstMessage, fieldErrors, request)
         );
@@ -71,7 +73,7 @@ public class GlobalException {
                 ? fieldErrors.values().iterator().next()
                 : ErrorCode.INVALID_KEY.getMessage();
 
-        log.warn("BindException on path {}: {}", request != null ? request.getRequestURI() : "", fieldErrors);
+        log.warn("Request rejected errorType=BindException invalidFieldCount={}", fieldErrors.size());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 buildResponse(ErrorCode.INVALID_KEY.getCode(), firstMessage, fieldErrors, request)
         );
@@ -84,7 +86,7 @@ public class GlobalException {
                 errors.put(violation.getPropertyPath().toString(), violation.getMessage())
         );
 
-        log.warn("ConstraintViolationException on path {}: {}", request != null ? request.getRequestURI() : "", errors);
+        log.warn("Request rejected errorType=ConstraintViolationException invalidFieldCount={}", errors.size());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 buildResponse(ErrorCode.INVALID_KEY.getCode(), "Constraint validation failed", errors, request)
         );
@@ -92,7 +94,7 @@ public class GlobalException {
 
     @ExceptionHandler(value = HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handlingNotReadable(HttpMessageNotReadableException exception, HttpServletRequest request) {
-        log.warn("Malformed JSON or unreadable HTTP body: {}", exception.getMessage());
+        log.warn("Request rejected errorType=HttpMessageNotReadableException");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 buildResponse(ErrorCode.INVALID_REQUEST_BODY.getCode(), "Malformed JSON request or invalid field format", null, request)
         );
@@ -101,7 +103,7 @@ public class GlobalException {
     @ExceptionHandler(value = MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handlingTypeMismatch(MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
         String message = String.format("Invalid parameter '%s': '%s'", exception.getName(), exception.getValue());
-        log.warn("Type mismatch on path {}: {}", request != null ? request.getRequestURI() : "", message);
+        log.warn("Request rejected errorType=MethodArgumentTypeMismatchException");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 buildResponse(ErrorCode.INVALID_KEY.getCode(), message, null, request)
         );
@@ -110,7 +112,7 @@ public class GlobalException {
     @ExceptionHandler(value = MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<Void>> handlingMissingParam(MissingServletRequestParameterException exception, HttpServletRequest request) {
         String message = String.format("Missing required parameter: %s", exception.getParameterName());
-        log.warn("Missing parameter on path {}: {}", request != null ? request.getRequestURI() : "", message);
+        log.warn("Request rejected errorType=MissingServletRequestParameterException");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 buildResponse(ErrorCode.INVALID_KEY.getCode(), message, null, request)
         );
@@ -118,7 +120,7 @@ public class GlobalException {
 
     @ExceptionHandler(value = ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ApiResponse<Void>> handlingOptimisticLock(ObjectOptimisticLockingFailureException exception, HttpServletRequest request) {
-        log.warn("Optimistic locking conflict on path {}: {}", request != null ? request.getRequestURI() : "", exception.getMessage());
+        log.warn("Request conflict errorType=ObjectOptimisticLockingFailureException");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
                 buildResponse(ErrorCode.SUPPORT_REQUEST_CONFLICT.getCode(), ErrorCode.SUPPORT_REQUEST_CONFLICT.getMessage(), null, request)
         );
@@ -126,7 +128,7 @@ public class GlobalException {
 
     @ExceptionHandler(value = DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handlingDataIntegrity(DataIntegrityViolationException exception, HttpServletRequest request) {
-        log.warn("Data integrity conflict on path {}: {}", request != null ? request.getRequestURI() : "", exception.getMessage());
+        log.warn("Request conflict errorType=DataIntegrityViolationException");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
                 buildResponse(ErrorCode.DATA_INTEGRITY_VIOLATION.getCode(), "Data conflict or unique constraint violation", null, request)
         );
@@ -134,7 +136,7 @@ public class GlobalException {
 
     @ExceptionHandler(value = MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiResponse<Void>> handlingMaxUpload(MaxUploadSizeExceededException exception, HttpServletRequest request) {
-        log.warn("Max upload size exceeded: {}", exception.getMessage());
+        log.warn("Request rejected errorType=MaxUploadSizeExceededException");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 buildResponse(ErrorCode.INVALID_FILE.getCode(), "Maximum upload file size exceeded", null, request)
         );
@@ -157,7 +159,12 @@ public class GlobalException {
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<ApiResponse<Void>> handlingRuntimeException(Exception exception, HttpServletRequest request) {
         String traceId = MDC.get(RequestIdFilter.MDC_REQUEST_ID_KEY);
-        log.error("Unhandled server exception [traceId={}]: ", traceId, exception);
+        // Exception messages/causes can contain SQL values, credentials or request bodies.
+        // Keep bounded code locations for diagnosis without printing those values.
+        String locations = Arrays.stream(exception.getStackTrace()).limit(20)
+                .map(StackTraceElement::toString).collect(Collectors.joining(" <- "));
+        log.error("Unhandled server exception traceId={} errorType={} locations={}",
+                traceId, exception.getClass().getSimpleName(), locations);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 buildResponse(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode(), ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage(), null, request)
         );
