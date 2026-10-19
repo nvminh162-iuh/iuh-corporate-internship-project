@@ -171,6 +171,13 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?PGADMIN_DEFAULT_EMAIL must be set and non-empty}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD must be set and non-empty}
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+      # True manages the connection list from JSON, including existing pgAdmin volumes.
+      # It replaces pgAdmin server registrations only, never PostgreSQL databases.
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: ${PGADMIN_REPLACE_SERVERS_ON_STARTUP:?PGADMIN_REPLACE_SERVERS_ON_STARTUP must be set and non-empty}
+    configs:
+      - source: pgadmin-servers
+        target: /pgadmin4/servers.json
     ports:
       - '127.0.0.1:55050:80'
     volumes:
@@ -214,6 +221,25 @@ services:
         aliases:
           - telecare-staging-kafka-ui
     logging: *service-logging
+
+# Inline content works with Dokploy Raw: no repository checkout or host file needed.
+# Credentials are deliberately excluded; enter POSTGRES_PASSWORD when connecting.
+configs:
+  pgadmin-servers:
+    content: |
+      {
+        "Servers": {
+          "1": {
+            "Name": "${PGADMIN_SERVER_NAME:?PGADMIN_SERVER_NAME must be set and non-empty}",
+            "Group": "${PGADMIN_SERVER_GROUP:?PGADMIN_SERVER_GROUP must be set and non-empty}",
+            "Host": "${PGADMIN_SERVER_HOST:?PGADMIN_SERVER_HOST must be set and non-empty}",
+            "Port": ${PGADMIN_SERVER_PORT:?PGADMIN_SERVER_PORT must be set and non-empty},
+            "MaintenanceDB": "${POSTGRES_DB:?POSTGRES_DB must be set and non-empty}",
+            "Username": "${POSTGRES_USER:?POSTGRES_USER must be set and non-empty}",
+            "SSLMode": "${PGADMIN_SERVER_SSL_MODE:?PGADMIN_SERVER_SSL_MODE must be set and non-empty}"
+          }
+        }
+      }
 
 volumes:
   postgres-data:
