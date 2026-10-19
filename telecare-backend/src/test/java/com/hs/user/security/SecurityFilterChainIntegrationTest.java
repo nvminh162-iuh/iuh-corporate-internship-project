@@ -4,6 +4,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -22,6 +25,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.hs.user.config.security.CustomAccessDeniedHandler;
 import com.hs.user.config.security.CustomAuthenticationEntryPoint;
@@ -38,11 +43,13 @@ import com.hs.user.service.SupportRequestAdminService;
 import com.hs.user.utils.CurrentUserUtils;
 
 @WebMvcTest(controllers = {
+        SecurityFilterChainIntegrationTest.RootTestController.class,
         NotificationController.class,
         SupportRequestAdminController.class,
         ServiceCategoryPublicController.class
 })
 @Import({SecurityConfig.class, CustomAuthenticationEntryPoint.class, CustomAccessDeniedHandler.class,
+        SecurityFilterChainIntegrationTest.RootTestController.class,
         SecurityFilterChainIntegrationTest.Jackson2TestConfiguration.class})
 @DisplayName("Security filter chain HTTP tests")
 class SecurityFilterChainIntegrationTest {
@@ -80,6 +87,31 @@ class SecurityFilterChainIntegrationTest {
         com.fasterxml.jackson.databind.ObjectMapper jackson2ObjectMapper() {
             return new com.fasterxml.jackson.databind.ObjectMapper();
         }
+    }
+
+    @RestController
+    static class RootTestController {
+        @GetMapping(value = "/", produces = "text/plain")
+        String ping() {
+            return "ping - pong";
+        }
+    }
+
+    @Test
+    @DisplayName("Root GET and HEAD do not require authentication")
+    void root_withoutAuthentication_returns200() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("ping - pong"));
+        mockMvc.perform(head("/"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Root public access does not permit unauthenticated writes")
+    void rootPost_withoutAuthentication_returns401() throws Exception {
+        mockMvc.perform(post("/"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

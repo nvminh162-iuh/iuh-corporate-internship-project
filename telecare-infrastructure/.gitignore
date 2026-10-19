@@ -3,6 +3,7 @@
 
 ### ENV ###
 .env
+.env.dokploy
 
 ### Maven ###
 target/
