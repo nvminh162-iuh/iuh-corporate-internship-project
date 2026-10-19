@@ -817,10 +817,14 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
+        "https://telecare-admin.nvminh162.id.vn/*",
+        "https://telecare-admin.vercel.app/*",
         "http://localhost:55000/*"
       ],
       "webOrigins": [
-        "http://localhost:55000"
+        "https://telecare-admin.nvminh162.id.vn",
+        "http://localhost:55000",
+        "https://telecare-admin.vercel.app"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -833,12 +837,15 @@
       "frontchannelLogout": true,
       "protocol": "openid-connect",
       "attributes": {
+        "logout.confirmation.enabled": "false",
         "realm_client": "false",
         "oidc.ciba.grant.enabled": "false",
         "backchannel.logout.session.required": "true",
         "standard.token.exchange.enabled": "false",
         "login_theme": "telecare-admin",
-        "post.logout.redirect.uris": "http://localhost:55000/*",
+        "frontchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "http://localhost:55000/*##https://telecare-admin.nvminh162.id.vn/*##https://telecare-admin.vercel.app/*",
+        "display.on.consent.screen": "false",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.revoke.offline.tokens": "false",
         "dpop.bound.access.tokens": "false"
@@ -876,10 +883,14 @@
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
         "telecare://*",
-        "http://localhost:53000/*"
+        "http://localhost:53000/*",
+        "https://telecare-seven.vercel.app/*",
+        "https://telecare.nvminh162.id.vn/*"
       ],
       "webOrigins": [
-        "http://localhost:53000"
+        "https://telecare-seven.vercel.app",
+        "http://localhost:53000",
+        "https://telecare.nvminh162.id.vn"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -897,7 +908,7 @@
         "oauth2.jwt.authorization.grant.enabled": "false",
         "standard.token.exchange.enabled": "false",
         "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "http://localhost:53000/*##telecare://*",
+        "post.logout.redirect.uris": "http://localhost:53000/*##telecare://*##https://telecare.nvminh162.id.vn/*##https://telecare-seven.vercel.app/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "use.jwks.url": "false",
         "backchannel.logout.revoke.offline.tokens": "false",
@@ -1819,14 +1830,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-address-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "saml-role-list-mapper",
-            "saml-user-property-mapper",
             "saml-user-attribute-mapper",
             "oidc-usermodel-property-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "saml-user-property-mapper",
+            "saml-role-list-mapper",
             "oidc-full-name-mapper",
-            "oidc-sha256-pairwise-sub-mapper"
+            "oidc-usermodel-attribute-mapper",
+            "oidc-address-mapper"
           ]
         }
       },
@@ -1854,14 +1865,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
+            "saml-user-property-mapper",
             "oidc-address-mapper",
             "oidc-usermodel-property-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "saml-user-attribute-mapper",
             "saml-role-list-mapper",
-            "saml-user-property-mapper",
-            "oidc-full-name-mapper"
+            "oidc-usermodel-attribute-mapper",
+            "oidc-full-name-mapper",
+            "saml-user-attribute-mapper",
+            "oidc-sha256-pairwise-sub-mapper"
           ]
         }
       },
